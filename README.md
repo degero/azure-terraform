@@ -29,11 +29,16 @@ azure-terraform-template
 
 winget install TerraformLinters.tflint
 
+checkov
+
 ## Developer Setup
 
 After cloning a repo:
 
 ```
+git config core.hooksPath .githooks
+chmod +x .githooks/pre-push
+
 cd environments/dev
 ./scripts/tf-init.sh/ps1
 
@@ -49,7 +54,7 @@ terraform apply tfplan
 
 terraform fmt -recursive
 ./scripts/tf-lint.sh/ps1
-
+checkov -d . --config-file .checkov.yaml
 
 
 ```
