@@ -10,10 +10,11 @@ jobs:
       - uses: actions/checkout@v4
 
       - uses: bridgecrewio/checkov-action@master
+        name: Checkov Terraform
         with:
           directory: ./
           framework: terraform
 
-      - uses: Terraform Validate
-        id: validate
+      - name: Terraform Validate
+        working-directory: ./
         run: terraform validate
