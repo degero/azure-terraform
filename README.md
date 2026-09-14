@@ -14,6 +14,8 @@ https://www.terraform-best-practices.com/examples/terraform/medium-size-infrastr
 - Role Based Access Control for state storage blob access
 - Named `/modules` files for easy location in VSCode (instead of lots of main.tf files)
 - Github Actions with: Linting, Formatting, Sec check (checkov), Environment controls for workflow approval
+- Pre-push hook to lint and (optionally) run checkov locally
+- Prettier config for markdown / yaml / json
 
 ## Folder structure
 

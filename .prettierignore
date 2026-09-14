@@ -1,2 +1,4 @@
 # .prettierignore
 **/.terraform
+scripts/
+.githooks/
