@@ -16,10 +16,11 @@ main.tf - Setup for australia east webapp and Linux ubuntu VM with output of pub
 - Isolated terraform remote state storage by environment to reduce blast radius
 - Role Based Access Control for state storage blob access
 - Named `/modules` files for easy location in VSCode (instead of lots of main.tf files)
-- Github Actions with: Linting, Sec check, Environment controls for workflow approval
+- Github Actions with: Linting, Formatting, Sec check (checkov), Environment controls for workflow approval
 
 ## Folder structure
 
+azure-terraform-template
 │
 ├── compositions/ - any complex compositions of modules to be used by the root terraform can go here, such as project components eg: function app + storage + vnet
 ├── environments/ - each target environment has its own subfolder, under that root terraform. This is to reduce blast radius
@@ -51,7 +52,7 @@ Only used when doing localdev work to keep CI dev state left alone
 
 ### Github Setup
 
-Setup Github secrets: AZURE_CLIENT_ID, AZURE_TENANT_ID, AZURE_SUBSCRIPTION_ID
+Setup Github Environment secrets for the Environments: AZURE_CLIENT_ID, AZURE_TENANT_ID, AZURE_SUBSCRIPTION_ID
 Setup protection rules and approvers for higher environments
 
 ### Azure setup
