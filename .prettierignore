@@ -1,4 +1,8 @@
 # .prettierignore
-**/.terraform
 scripts/
 .githooks/
+*.tf
+*.tfvars
+*.tfstate
+*.tfstate.backup
+.terraform/
