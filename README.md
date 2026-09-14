@@ -4,11 +4,8 @@
 
 An opinionated terraform structure for running multi env infra in Azure
 
-this follows structures from
-
-https://www.terraform-best-practices.com/
-
-main.tf - Setup for australia east webapp and Linux ubuntu VM with output of public IP address
+this follows some structures from the Medium size infrastructure code structure:
+https://www.terraform-best-practices.com/examples/terraform/medium-size-infrastructure
 
 ## Key components
 
@@ -22,9 +19,8 @@ main.tf - Setup for australia east webapp and Linux ubuntu VM with output of pub
 
 azure-terraform-template
 │
-├── compositions/ - any complex compositions of modules to be used by the root terraform can go here, such as project components eg: function app + storage + vnet
-├── environments/ - each target environment has its own subfolder, under that root terraform. This is to reduce blast radius
-├── modules/ - Terraform modules
+├── environments/ - each target azure environment has its own subfolder to reduce blast radius
+├── modules/ - Terraform modules used by environments
 └── scripts/ - Az CLI scripts to setup terraform remote state store and github actions access to azure
 
 ## Requriements
@@ -36,11 +32,12 @@ azure-terraform-template
 After cloning a repo:
 
 ```
-terraform init -backend-config=<fullpathtobackend.hcl>
+cd environments/dev
+terraform init -backend-config="backend.hcl"
 terraform workspace create dev
 
 ...
-before commiting changes
+before committing changes
 terraform fmt -recursive
 ...
 

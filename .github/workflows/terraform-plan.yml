@@ -1,7 +1,7 @@
 name: "Terraform Plan"
 
 on:
-  pull_request:
+  workflow_call:
 
 env:
   AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
