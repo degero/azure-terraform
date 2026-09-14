@@ -1,0 +1,11 @@
+# Copy to backend.hcl (gitignored) and fill in, or pass equivalent
+# -backend-config flags in CI. Each environment MUST use a distinct
+# storage account/container/key combination or state files will collide.
+#
+# terraform init -backend-config=backend.hcl
+
+resource_group_name  = "rg-tfstate-shared"
+storage_account_name = "sttfstateshared001"
+container_name       = "tfstate"
+key                  = "appname/environment/terraform.tfstate"
+use_azuread_auth     = true

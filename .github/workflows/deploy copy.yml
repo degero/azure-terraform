@@ -1,0 +1,73 @@
+name: Terraform
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  plan:
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    env:
+      ARM_CLIENT_ID: ${{ secrets.ARM_CLIENT_ID }}
+      ARM_SUBSCRIPTION_ID: ${{ secrets.ARM_SUBSCRIPTION_ID }}
+      ARM_TENANT_ID: ${{ secrets.ARM_TENANT_ID }}
+      ARM_USE_OIDC: "true"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: hashicorp/setup-terraform@v3
+      - run: terraform init -backend-config="backend.hcl"
+      - run: terraform workspace select dev || terraform workspace new dev
+      - run: terraform plan -var-file="dev.tfvars"
+
+  deploy-dev:
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    environment: dev
+    env:
+      ARM_CLIENT_ID: ${{ secrets.ARM_CLIENT_ID }}
+      ARM_SUBSCRIPTION_ID: ${{ secrets.ARM_SUBSCRIPTION_ID }}
+      ARM_TENANT_ID: ${{ secrets.ARM_TENANT_ID }}
+      ARM_USE_OIDC: "true"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: hashicorp/setup-terraform@v3
+
+      - run: terraform init -backend-config="backend.hcl"
+      - run: terraform workspace select dev || terraform workspace new dev
+
+      - name: Verify workspace
+        run: |
+          [[ "$(terraform workspace show)" == "dev" ]] || { echo "::error::wrong workspace"; exit 1; }
+
+      - run: terraform plan -var-file="dev.tfvars" -out=tfplan
+      - run: terraform apply -auto-approve tfplan
+
+  deploy-prod:
+    needs: deploy-dev
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    environment: prod
+    env:
+      ARM_CLIENT_ID: ${{ secrets.ARM_CLIENT_ID }}
+      ARM_SUBSCRIPTION_ID: ${{ secrets.ARM_SUBSCRIPTION_ID }}
+      ARM_TENANT_ID: ${{ secrets.ARM_TENANT_ID }}
+      ARM_USE_OIDC: "true"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: hashicorp/setup-terraform@v3
+
+      - run: terraform init -backend-config="backend.hcl"
+      - run: terraform workspace select prod || terraform workspace new prod
+
+      - name: Verify workspace
+        run: |
+          [[ "$(terraform workspace show)" == "prod" ]] || { echo "::error::wrong workspace"; exit 1; }
+
+      - run: terraform plan -var-file="prod.tfvars" -out=tfplan
+      - run: terraform apply -auto-approve tfplan

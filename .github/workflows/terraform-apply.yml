@@ -1,0 +1,20 @@
+name: "Terraform Apply"
+
+on:
+  push:
+    branches:
+      - main
+
+env:
+
+
+jobs:
+  terraform:
+    name: "Terraform Apply"
+    runs-on: ubuntu-latest
+    permissions: # granular permissions
+      # so GitHub can check out this repo using the default github.token
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3

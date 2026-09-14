@@ -1,0 +1,15 @@
+name: Checks
+
+on:
+  workflow_call:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: bridgecrewio/checkov-action@master
+        with:
+          directory: ./
+          framework: terraform

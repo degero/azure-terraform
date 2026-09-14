@@ -1,0 +1,56 @@
+name: Lint
+
+on:
+  workflow_call:
+
+jobs:
+  prettier:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: npx prettier --check "**/*.{json,yaml,yml,md}"
+
+  fmt:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_wrapper: false
+
+      - name: Terraform fmt check
+        run: terraform fmt -check -recursive
+
+  tflint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: terraform-linters/setup-tflint@v4
+        with:
+          tflint_version: latest
+
+      - name: Init TFLint
+        run: tflint --init
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Run TFLint
+        run: tflint -f compact --recursive
+  
+  checkov:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: bridgecrewio/checkov-action@master
+        with:
+          directory: ./
+          framework: terraform 
+
+  # tfsec:
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - uses: actions/checkout@v4
+
+  #     - name: Run tfsec
+  #       uses: aquasecurity/tfsec-action@v1.0.3

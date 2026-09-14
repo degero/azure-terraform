@@ -1,0 +1,25 @@
+name: "Terraform Plan"
+
+on:
+  pull_request:
+
+env:
+  ARM_CLIENT_ID:       ${{ secrets.ARM_CLIENT_ID }}
+  ARM_SUBSCRIPTION_ID: ${{ secrets.ARM_SUBSCRIPTION_ID }}
+  ARM_TENANT_ID:       ${{ secrets.ARM_TENANT_ID }}
+  ARM_USE_OIDC:        "true"
+
+jobs:
+  terraform:
+    name: "Terraform Plan"
+    runs-on: ubuntu-latest
+    permissions:
+      # so GitHub can check out this repo using the default github.token
+      contents: read
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: hashicorp/setup-terraform@v3
+      - run: terraform init -backend-config="backend.hcl"
+      - run: terraform workspace select dev || terraform workspace new dev
+      - run: terraform plan -var-file="dev.tfvars"

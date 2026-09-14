@@ -1,0 +1,36 @@
+name: Deploy Infrastructure
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: "Run against a single environment only (leave blank to run dev → test → prod)"
+        required: false
+        type: choice
+        options: ["", dev, test, prod]
+
+jobs:
+  dev:
+    if: github.event_name == 'push' || inputs.environment == 'dev' || inputs.environment == ''
+    uses: ./.github/workflows/tf-plan-apply.yml
+    with:
+      environment: dev
+    secrets: inherit
+
+  test:
+    needs: dev
+    if: github.event_name == 'push' || inputs.environment == 'test' || inputs.environment == ''
+    uses: ./.github/workflows/tf-plan-apply.yml
+    with:
+      environment: test
+    secrets: inherit
+
+  prod:
+    needs: test
+    if: github.event_name == 'push' || inputs.environment == 'prod' || inputs.environment == ''
+    uses: ./.github/workflows/tf-plan-apply.yml
+    with:
+      environment: prod
+    secrets: inherit
