@@ -1,0 +1,12 @@
+name: Shared Checks
+
+on:
+  workflow_call:
+
+jobs:
+  lint:
+    uses: ./.github/workflows/lint.yml
+
+  checks:
+    needs: lint
+    uses: ./.github/workflows/checks.yml

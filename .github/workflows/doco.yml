@@ -1,0 +1,25 @@
+name: Generate docs
+
+on:
+  workflow_dispatch:
+  workflow_call:
+
+permissions:
+  contents: write
+
+jobs:
+  docs:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.ref }}
+
+      - name: Render terraform docs in /docs and push changes back to PR branch
+        uses: terraform-docs/gh-actions@v1.4.1
+        with:
+          find-dir: .
+          recursive: true
+          output-file: docs/README.md
+          output-method: inject
+          git-push: "true"

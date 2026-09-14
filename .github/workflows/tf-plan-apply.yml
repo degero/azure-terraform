@@ -1,0 +1,65 @@
+name: Terraform Plan Apply
+
+on:
+  workflow_call:
+    inputs:
+      environment:
+        description: Deployment environment
+        type: string
+        default: "dev"
+      noapply:
+        description: Plan only, do not apply, if true
+        type: boolean
+        default: false
+    secrets:
+      AZURE_CLIENT_ID:
+        required: true
+      AZURE_SUBSCRIPTION_ID:
+        required: true
+      AZURE_TENANT_ID:
+        required: true
+
+permissions:
+  id-token: write
+  contents: read
+
+env:
+  AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+  AZURE_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+  AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+  WORKING_DIR: ./environments/${{ inputs.environment }}
+
+jobs:
+  plan:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ./.github/actions/tf-init
+        with:
+          working-directory: ${{ env.WORKING_DIR }}
+      - name: Terraform Plan
+        working-directory: ${{ env.WORKING_DIR }}
+        run: terraform plan -var-file="${{ inputs.environment }}.tfvars" -out=tfplan
+      - uses: actions/upload-artifact@v4
+        if: inputs.noapply == false
+        with:
+          name: ${{ inputs.environment }}-tfplan
+          path: ${{ env.WORKING_DIR }}/tfplan
+
+  apply:
+    if: inputs.noapply == false
+    needs: plan
+    runs-on: ubuntu-latest
+    environment: ${{ inputs.environment }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ./.github/actions/tf-init
+        with:
+          working-directory: ${{ env.WORKING_DIR }}
+      - uses: actions/download-artifact@v4
+        with:
+          name: ${{ inputs.environment }}-tfplan
+          path: ${{ env.WORKING_DIR }}
+      - name: Terraform Apply
+        working-directory: ${{ env.WORKING_DIR }}
+        run: terraform apply -auto-approve tfplan

@@ -27,6 +27,8 @@ azure-terraform-template
 
 - Role 'Storage Blob Data Contributor' for any developers and CICD (this is set if using ./scripts files)
 
+winget install TerraformLinters.tflint
+
 ## Developer Setup
 
 After cloning a repo:

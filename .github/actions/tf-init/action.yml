@@ -1,0 +1,20 @@
+name: Terraform Init
+description: Initializes Terraform against the shared remote backend and target root module in 'environments'
+
+inputs:
+  working_directory:
+    description: Directory containing the Terraform config
+    required: true
+    default: "."
+
+runs:
+  using: composite
+  steps:
+    - uses: hashicorp/setup-terraform@v3
+      with:
+        terraform_wrapper: false
+
+    - name: Terraform Init
+      shell: bash
+      working-directory: ${{ inputs.working_directory }}
+      run: terraform init -backend-config="backend.hcl"

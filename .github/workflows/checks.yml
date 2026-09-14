@@ -13,3 +13,7 @@ jobs:
         with:
           directory: ./
           framework: terraform
+
+      - uses: Terraform Validate
+        id: validate
+        run: terraform validate

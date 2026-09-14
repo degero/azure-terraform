@@ -6,8 +6,12 @@ terraform {
       source  = "hashicorp/azurerm"
       version = ">= 5.4.0"
     }
+
+    azapi = {
+      source  = "Azure/azapi"
+      version = "~> 2.4"
+    }
   }
 
   backend "azurerm" {}
-  # if using TF Cloud remote store - backend "remote" {}
 }

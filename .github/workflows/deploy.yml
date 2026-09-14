@@ -1,0 +1,29 @@
+# .github/workflows/deploy.yml
+name: Deploy
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  shared:
+    uses: ./.github/workflows/_shared.yml
+
+  plan-apply:
+    needs: shared
+    strategy:
+      max-parallel: 1 # run dev before test, and only if dev passes
+      matrix:
+        include:
+          - environment: dev
+            noapply: false
+          - environment: test
+            noapply: false
+    uses: ./.github/workflows/tf-plan-apply.yml
+    with:
+      environment: ${{ matrix.environment }}
+      noapply: ${{ matrix.noapply }}
+    secrets:
+      AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+      AZURE_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+      AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}

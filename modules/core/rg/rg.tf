@@ -14,7 +14,7 @@ variable "tags" {
   default     = {}
 }
 
-module "avm-res-resources-resourcegroup" {
+module "this" {
   source  = "Azure/avm-res-resources-resourcegroup/azurerm"
   version = "0.4.0"
 
@@ -24,17 +24,12 @@ module "avm-res-resources-resourcegroup" {
   tags = var.tags
 }
 
-output "id" {
+output "resource_id" {
   description = "Resource ID of the resource group."
-  value       = azurerm_resource_group.this.id
+  value       = module.this.resource_id
 }
 
 output "name" {
   description = "Name of the resource group."
-  value       = azurerm_resource_group.this.name
-}
-
-output "location" {
-  description = "Location of the resource group."
-  value       = azurerm_resource_group.this.location
+  value       = module.this.name
 }
