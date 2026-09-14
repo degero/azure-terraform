@@ -40,6 +40,7 @@ After cloning a repo:
 ```
 git config core.hooksPath .githooks
 chmod +x .githooks/pre-push
+chmod +x ./scripts/prepush.sh
 
 cd environments/dev
 ./scripts/tf-init.sh/ps1
