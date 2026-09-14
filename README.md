@@ -35,17 +35,26 @@ After cloning a repo:
 
 ```
 cd environments/dev
-terraform init -backend-config="backend.hcl"
-terraform workspace create dev
+./scripts/tf-init.sh/ps1
 
-...
-before committing changes
+terraform workspace new <username or issuenumber>
+
+# Make changes
+
+terraform plan -out="tfplan"
+terraform apply tfplan
+
+
+# before committing changes run:
+
 terraform fmt -recursive
-...
+./scripts/tf-lint.sh/ps1
+
+
 
 ```
 
-Only used when doing localdev work to keep CI dev state left alone
+It is recommended to use a workspace for local dev to not interfere with the tfstate used by CI or other devs.
 
 ## Admin Setup
 

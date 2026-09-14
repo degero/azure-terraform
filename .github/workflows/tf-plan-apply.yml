@@ -40,12 +40,25 @@ jobs:
       - name: Terraform Plan
         working-directory: ${{ env.WORKING_DIR }}
         run: terraform plan -var-file="${{ inputs.environment }}.tfvars" -out=tfplan
+      - name: Convert plan to JSON
+        working-directory: ${{ env.WORKING_DIR }}
+        run: terraform show -json tfplan > tfplan.json
+      - name: Checkov scan (plan)
+        uses: bridgecrewio/checkov-action@master
+        with:
+          file: ${{ env.WORKING_DIR }}/tfplan.json
+          framework: terraform_plan
+          soft_fail: false
       - uses: actions/upload-artifact@v4
         if: inputs.noapply == false
         with:
           name: ${{ inputs.environment }}-tfplan
           path: ${{ env.WORKING_DIR }}/tfplan
-
+      - uses: actions/upload-artifact@v4
+        if: inputs.noapply == false
+        with:
+          name: ${{ inputs.environment }}-tfplan-json
+          path: ${{ env.WORKING_DIR }}/tfplan.json
   apply:
     if: inputs.noapply == false
     needs: plan
