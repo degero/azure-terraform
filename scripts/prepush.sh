@@ -11,7 +11,7 @@ terraform fmt -recursive -check
 
 echo "==> tflint (modules)"
 tflint -f compact --recursive --chdir=modules      --config="$REPO_ROOT/.tflint.modules.hcl"
-tflint -f compact --recursive --chdir=modulegroup  --config="$REPO_ROOT/.tflint.modules.hcl"
+tflint -f compact --recursive --chdir=modulegroups  --config="$REPO_ROOT/.tflint.modules.hcl"
 
 echo "==> tflint (environments)"
 tflint -f compact --recursive --chdir=environments
