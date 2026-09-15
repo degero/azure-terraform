@@ -8,10 +8,10 @@ locals {
   })
 
 }
-
+#TODO move to core
 module "naming" {
-  source  = "Azure/naming/azurerm"
-  version = "0.4.3"
+  source = "github.com/Azure/terraform-azurerm-naming?ref=a837381f6857dac19e0f43eff1ab39431dbb74c0"
+  # version 0.4.3
 
   suffix = [var.projectname, var.environment]
 }

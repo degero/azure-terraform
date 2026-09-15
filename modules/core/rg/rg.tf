@@ -15,8 +15,8 @@ variable "tags" {
 }
 
 module "this" {
-  source  = "Azure/avm-res-resources-resourcegroup/azurerm"
-  version = "0.4.0"
+  # version 0.4.0
+  source = "github.com/Azure/terraform-azurerm-avm-res-resources-resourcegroup?ref=2c605230f1bcb5dc29a667f2a43258bfa9140c32"
 
   name     = var.name
   location = var.location
