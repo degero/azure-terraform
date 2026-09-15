@@ -44,7 +44,7 @@ git config core.hooksPath .githooks
 cd environments/dev
 ./scripts/tf-init.sh/ps1
 
-terraform workspace new <username or issuenumber>
+terraform workspace new <issuenumber> (so workspace is unique)
 
 # Make changes
 
@@ -57,6 +57,11 @@ terraform apply tfplan
 terraform fmt -recursive
 ./scripts/tf-lint.sh/ps1
 checkov -d . --config-file .checkov.yaml
+
+
+# after PR complete
+terraform workspace select default
+terraform workspace delete <issuenumber>
 
 
 ```
@@ -124,8 +129,6 @@ chmod +x ./scripts/prepush.sh
 ### Github
 
 ### Azure
-
-
 
 ## Links
 

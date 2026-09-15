@@ -1,4 +1,3 @@
 framework:
   - terraform
 skip-check:
-  #- CKV_AWS_123   # example: checks you've deliberately excluded
