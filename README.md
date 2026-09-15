@@ -39,8 +39,7 @@ After cloning a repo:
 
 ```
 git config core.hooksPath .githooks
-chmod +x .githooks/pre-push
-chmod +x ./scripts/prepush.sh
+
 
 cd environments/dev
 ./scripts/tf-init.sh/ps1
@@ -110,3 +109,28 @@ environments/
 
 aztfexport
 https://learn.microsoft.com/en-us/azure/developer/terraform/azure-export-for-terraform/export-terraform-overview
+
+## Troubleshooting
+
+### Local dev
+
+If there are any issues with githooks, set the permissions:
+
+```bash
+chmod +x .githooks/pre-push
+chmod +x ./scripts/prepush.sh
+```
+
+### Github
+
+### Azure
+
+
+
+## Links
+
+https://github.com/terraform-linters/tflint
+
+https://github.com/bridgecrewio/checkov
+
+https://github.com/terraform-docs/gh-actions
