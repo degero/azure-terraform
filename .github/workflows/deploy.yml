@@ -7,12 +7,14 @@ on:
 
 permissions:
   contents: read
+
 jobs:
   shared:
     uses: ./.github/workflows/_shared.yml
 
   plan-apply:
     permissions:
+      contents: read
       id-token: write
     needs: shared
     strategy:
