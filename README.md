@@ -29,7 +29,9 @@ azure-terraform-template
 
 - Role 'Storage Blob Data Contributor' for any developers and CICD (this is set if using ./scripts files)
 
-winget install TerraformLinters.tflint
+TerraformLinters.tflint
+
+make
 
 checkov
 
@@ -52,11 +54,9 @@ terraform plan -out="tfplan"
 terraform apply tfplan
 
 
-# before committing changes run:
+# before committing changes run in repo root:
 
-terraform fmt -recursive
-./scripts/tf-lint.sh/ps1
-checkov -d . --config-file .checkov.yaml
+
 
 
 # after PR complete

@@ -1,0 +1,25 @@
+name: Terraform validate
+
+on:
+  workflow_call:
+    inputs:
+      environment:
+        description: Validation environment
+        type: string
+        default: "dev"
+
+permissions:
+  contents: read
+
+env:
+  WORKING_DIR: ./environments/${{ inputs.environment }}
+
+jobs:
+  tf-validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ./.github/actions/tf-init
+        with:
+          working_directory: ${{ env.WORKING_DIR }}
+          no_backend: "true"

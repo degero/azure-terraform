@@ -1,4 +1,4 @@
-name: Terraform Plan Apply
+name: Terraform Plan
 
 on:
   workflow_call:
@@ -7,10 +7,6 @@ on:
         description: Deployment environment
         type: string
         default: "dev"
-      noapply:
-        description: Plan only, do not apply, if true
-        type: boolean
-        default: false
     secrets:
       AZURE_CLIENT_ID:
         required: true
@@ -22,12 +18,14 @@ on:
 permissions:
   id-token: write
   contents: read
+  pull-requests: write
 
 env:
   AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
   AZURE_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
   AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
   WORKING_DIR: ./environments/${{ inputs.environment }}
+  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
 jobs:
   plan:
@@ -36,43 +34,38 @@ jobs:
       - uses: actions/checkout@v4
       - uses: ./.github/actions/tf-init
         with:
-          working-directory: ${{ env.WORKING_DIR }}
+          working_directory: ${{ env.WORKING_DIR }}
       - name: Terraform Plan
+        id: plan
         working-directory: ${{ env.WORKING_DIR }}
         run: terraform plan -var-file="${{ inputs.environment }}.tfvars" -out=tfplan
+      - name: Post Plan
+        if: always() && github.ref != 'refs/heads/master' && (steps.plan.outcome == 'success' || steps.plan.outcome == 'failure')
+        uses: robburger/terraform-pr-commenter@v1
+        with:
+          commenter_type: plan
+          commenter_input: ${{ format('{0}{1}', steps.plan.outputs.stdout, steps.plan.outputs.stderr) }}
+          commenter_exitcode: ${{ steps.plan.outputs.exitcode }}
       - name: Convert plan to JSON
         working-directory: ${{ env.WORKING_DIR }}
         run: terraform show -json tfplan > tfplan.json
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ${{ inputs.environment }}-tfplan
+          path: ${{ env.WORKING_DIR }}/tfplan
+      # If extra audit trail needed
+      # - uses: actions/upload-artifact@v4
+      #   with:
+      #     name: ${{ inputs.environment }}-tfplan-json
+      #     path: ${{ env.WORKING_DIR }}/tfplan.json
       - name: Checkov scan (plan)
         uses: bridgecrewio/checkov-action@master
         with:
           file: ${{ env.WORKING_DIR }}/tfplan.json
           framework: terraform_plan
           soft_fail: false
-      - uses: actions/upload-artifact@v4
-        if: inputs.noapply == false
+          output_format: cli,sarif # sarif enables GitHub code scanning integration
+          output_file_path: console,results.sarif
+      - uses: github/codeql-action/upload-sarif@v3
         with:
-          name: ${{ inputs.environment }}-tfplan
-          path: ${{ env.WORKING_DIR }}/tfplan
-      - uses: actions/upload-artifact@v4
-        if: inputs.noapply == false
-        with:
-          name: ${{ inputs.environment }}-tfplan-json
-          path: ${{ env.WORKING_DIR }}/tfplan.json
-  apply:
-    if: inputs.noapply == false
-    needs: plan
-    runs-on: ubuntu-latest
-    environment: ${{ inputs.environment }}
-    steps:
-      - uses: actions/checkout@v4
-      - uses: ./.github/actions/tf-init
-        with:
-          working-directory: ${{ env.WORKING_DIR }}
-      - uses: actions/download-artifact@v4
-        with:
-          name: ${{ inputs.environment }}-tfplan
-          path: ${{ env.WORKING_DIR }}
-      - name: Terraform Apply
-        working-directory: ${{ env.WORKING_DIR }}
-        run: terraform apply -auto-approve tfplan
+          sarif_file: results.sarif

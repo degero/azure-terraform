@@ -1,0 +1,53 @@
+# .github/workflows/deploy.yml
+name: Main
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: terraform-apply
+  cancel-in-progress: false
+
+# main.yml
+jobs:
+  shared:
+    uses: ./.github/workflows/_shared.yml
+
+  plan:
+    needs: shared
+    permissions:
+      id-token: write
+      contents: read
+      pull-requests: write
+    strategy:
+      max-parallel: 1
+      matrix:
+        environment: [dev, test]
+    uses: ./.github/workflows/tf-plan.yml
+    with:
+      environment: ${{ matrix.environment }}
+    secrets:
+      AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+      AZURE_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+      AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+
+  apply:
+    needs: plan
+    permissions:
+      contents: read
+      id-token: write
+    strategy:
+      max-parallel: 1
+      matrix:
+        environment: [dev, test]
+    uses: ./.github/workflows/tf-apply.yml
+    with:
+      environment: ${{ matrix.environment }}
+    secrets:
+      AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+      AZURE_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+      AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}

@@ -18,6 +18,15 @@ jobs:
           directory: ./
           framework: terraform
 
-      - name: Terraform Validate
-        working-directory: ./
-        run: terraform validate
+  validate:
+    permissions:
+      contents: read
+      id-token: write
+    needs: checkov
+    strategy:
+      max-parallel: 1 # run dev before test, and only if dev passes
+      matrix:
+        environment: [dev, test] # Add more envs as needed
+    uses: ./.github/workflows/tf-validate.yml
+    with:
+      environment: ${{ matrix.environment }}

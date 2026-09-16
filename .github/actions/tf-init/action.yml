@@ -2,6 +2,10 @@ name: Terraform Init
 description: Initializes Terraform against the shared remote backend and target root module in 'environments'
 
 inputs:
+  no_backend:
+    description: Skip remote backend config (local-only init, e.g. for validate)
+    required: true
+    default: "false"
   working_directory:
     description: Directory containing the Terraform config
     required: true
@@ -11,10 +15,13 @@ runs:
   using: composite
   steps:
     - uses: hashicorp/setup-terraform@v3
-      with:
-        terraform_wrapper: false
 
     - name: Terraform Init
       shell: bash
       working-directory: ${{ inputs.working_directory }}
-      run: terraform init -backend-config="backend.hcl"
+      run: |
+        if [ "${{ inputs.no_backend }}" = "true" ]; then
+          terraform init -backend=false
+        else
+          terraform init -backend-config="backend.hcl"
+        fi

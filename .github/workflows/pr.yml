@@ -5,28 +5,27 @@ on:
     branches: [main]
 
 permissions:
+  id-token: write
   contents: read
+  pull-requests: write
 
 jobs:
   shared:
     uses: ./.github/workflows/_shared.yml
 
-  plan-pullrequest:
+  plan:
     permissions:
       id-token: write
+      contents: read
+      pull-requests: write
     needs: shared
-    uses: ./.github/workflows/tf-plan-apply.yml
+    uses: ./.github/workflows/tf-plan.yml
     strategy:
       max-parallel: 1 # run dev before test, and only if dev passes
       matrix:
-        include:
-          - environment: dev
-            noapply: true
-          - environment: test
-            noapply: true
+        environment: [dev, test] # Add more envs as needed
     with:
       environment: ${{ matrix.environment }}
-      noapply: ${{ matrix.noapply }}
     secrets:
       AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
       AZURE_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
@@ -35,5 +34,5 @@ jobs:
   doco:
     permissions:
       contents: write
-    needs: plan-dev
+    needs: plan
     uses: ./.github/workflows/doco.yml
