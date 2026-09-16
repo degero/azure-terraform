@@ -11,8 +11,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-
-      - uses: bridgecrewio/checkov-action@master
+      - uses: bridgecrewio/checkov-action@a8664e3a0549367977f0cda990a34311835c87c0 #v12.3123.0
         name: Checkov Terraform
         with:
           directory: ./
@@ -21,7 +20,6 @@ jobs:
   validate:
     permissions:
       contents: read
-      id-token: write
     needs: checkov
     strategy:
       max-parallel: 1 # run dev before test, and only if dev passes

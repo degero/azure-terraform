@@ -21,9 +21,10 @@ permissions:
   pull-requests: write
 
 env:
-  AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
-  AZURE_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
-  AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+  ARM_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+  ARM_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+  ARM_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+  ARM_USE_OIDC: "true"
   WORKING_DIR: ./environments/${{ inputs.environment }}
   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
@@ -40,8 +41,8 @@ jobs:
         working-directory: ${{ env.WORKING_DIR }}
         run: terraform plan -var-file="${{ inputs.environment }}.tfvars" -out=tfplan
       - name: Post Plan
-        if: always() && github.ref != 'refs/heads/master' && (steps.plan.outcome == 'success' || steps.plan.outcome == 'failure')
-        uses: robburger/terraform-pr-commenter@v1
+        if: always() && github.event_name == 'pull_request' && (steps.plan.outcome == 'success' || steps.plan.outcome == 'failure')
+        uses: robburger/terraform-pr-commenter@72c6e45eced6641488a6cf3ff104b7b9bda9c66c # v1.5.0
         with:
           commenter_type: plan
           commenter_input: ${{ format('{0}{1}', steps.plan.outputs.stdout, steps.plan.outputs.stderr) }}
@@ -49,11 +50,11 @@ jobs:
       - name: Convert plan to JSON
         working-directory: ${{ env.WORKING_DIR }}
         run: terraform show -json tfplan > tfplan.json
-      - uses: actions/upload-artifact@v4
-        with:
-          name: ${{ inputs.environment }}-tfplan
-          path: ${{ env.WORKING_DIR }}/tfplan
-      # If extra audit trail needed
+      # If extra audit trail needed but sec risk
+      # - uses: actions/upload-artifact@v4
+      #   with:
+      #     name: ${{ inputs.environment }}-tfplan
+      #     path: ${{ env.WORKING_DIR }}/tfplan
       # - uses: actions/upload-artifact@v4
       #   with:
       #     name: ${{ inputs.environment }}-tfplan-json

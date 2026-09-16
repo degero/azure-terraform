@@ -4,17 +4,17 @@ description: Initializes Terraform against the shared remote backend and target 
 inputs:
   no_backend:
     description: Skip remote backend config (local-only init, e.g. for validate)
-    required: true
+    required: false
     default: "false"
   working_directory:
     description: Directory containing the Terraform config
-    required: true
+    required: false
     default: "."
 
 runs:
   using: composite
   steps:
-    - uses: hashicorp/setup-terraform@v3
+    - uses: hashicorp/setup-terraform@b9cd54a3c349d3f38e8881555d616ced269862dd #vv3.1.2
 
     - name: Terraform Init
       shell: bash

@@ -3,6 +3,15 @@ name: PR
 on:
   pull_request:
     branches: [main]
+    paths:
+      - environments
+      - modules
+      - modulegroups
+      - tests
+
+concurrency:
+  group: terraform-apply
+  cancel-in-progress: false
 
 permissions:
   id-token: write
