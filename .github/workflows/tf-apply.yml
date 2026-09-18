@@ -23,7 +23,7 @@ jobs:
       ARM_USE_AZUREAD: true
       ARM_USE_OIDC: true
       WORKING_DIR: ./environments/${{ inputs.environment }}
-      TFPLAN_STORAGE_ACCOUNT: ${{ secrets.TFPLAN_STORAGE_ACCOUNT }}
+      TFPLAN_STORAGE_ACCOUNT: ${{ secrets.TF_PLAN_STORAGE_ACCOUNT }}
     steps:
       - uses: actions/checkout@v7
       - uses: ./.github/actions/tf-init
@@ -34,7 +34,7 @@ jobs:
         run: |
           az storage blob upload \
             --auth-mode login \
-            --account-name "${{ env.TFPLAN_STORAGE_ACCOUNT }}" \
+            --account-name "${{ env.TF_PLAN_STORAGE_ACCOUNT }}" \
             --container-name tfplans \
             --name "${{ inputs.environment }}/${{ github.run_id }}-${{ github.run_attempt }}/tfplan" \
             --file tfplan \

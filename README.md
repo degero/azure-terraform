@@ -1,20 +1,19 @@
-# Terraform Azure Githup Template
+# Terraform Azure Github Template
 
 ## Description
 
-An opinionated terraform structure for running multi env infra in Azure
+An opinionated template for developing Terraform with Github running multi env infra deployments in Azure.
 
-this follows some structures from the Medium size infrastructure code structure:
-https://www.terraform-best-practices.com/examples/terraform/medium-size-infrastructure
+This template is focused on the terraform and github cicd it is not opinionated on the Azure hosted terraform management infrastructure as this can vary greatly by organisation. Scripts are included to get a baseline running with blast radius by "Resource group per environment".
 
 ## Key components
 
-- Isolated 'environments' root terraform modules to reduce blast radius
-- Isolated terraform remote state blob storage by environment to reduce blast radius
+- Isolated /environments/env-name root terraform modules to reduce blast radius / increased flexibility
+- Isolated terraform federated credentials and remote state blob storage by environment
 - TFPlan artifacts uploaded to blob storage (retention 7 days)
-- Role Based Access Control for state storage blob access
+- Azure Role Based Access Control for state storage blob access and OIDC infra deployment
 - Named `/modules` files for easy location in VSCode (instead of lots of main.tf files)
-- Github Actions with: Linting, Formatting, Sec check (checkov), Environment controls for workflow approval
+- Github Workflows with: Linting (tflint), Formatting (terraform fmt), Sec check (checkov), Github Environments for workflow approval, Dependabot (terraform, github actions), Doco generation (terraform-docs), Terraform Validate
 - Pre-push hook to lint and (optionally) run checkov locally
 - Prettier config for markdown / yaml / json
 
@@ -26,19 +25,31 @@ azure-terraform-template
 ├── modules/ - Terraform modules used by environments
 └── scripts/ - Az CLI scripts to setup terraform remote state store and github actions access to azure
 
-## Requriements
+## Requirements
 
-- Role 'Storage Blob Data Contributor' for any developers and CICD (this is set if using ./scripts files)
+## Administrators
 
-TerraformLinters.tflint
+- Subscription level contributor access
+- AZ CLI logged in with target subscription set
 
-make
+### Developers
 
-checkov
+- Role 'Storage Blob Data Contributor' on the DEV tfstate blob storage
+- TerraformLinters.tflint
+- checkov
 
-## Developer Setup
+## Environment setup
 
-If you have access, assign yourself access to the dev tfstate storage
+### Administrators
+
+1. Copy [](scripts/.env.example) to scripts/.env and update with your Azure environment
+1. Setup TF state stores with [scripts/administrators/setup-azure-tfstate-store.sh](scripts/administrators/setup-azure-tfstate-store.sh)
+1. Setup Github: CICD federated credentials, Environments, Environment vars [](/scripts/administrators/setup-cicd-credentials.sh)
+1. Update Github Environments variable TF_PLAN_STORAGE_ACCOUNT with the appropriate storage account name
+
+### Developers
+
+If you have appropriate access, assign yourself access to the dev tfstate storage:
 
 ```
 az role assignment create \
@@ -96,6 +107,8 @@ IMPORTANT: You will need to manually add the secret TFPLAN_STORAGE_ACCOUNT to ea
 
 ### Azure setup
 
+While the [bootstrapping admin scripts](./scripts/administrtion) ar based on the Terraform state / plan storage and deployed envs in the same subscription for simplicity. It is recommended to use [Subscription Democratisation](https://learn.microsoft.com/en-us/azure/cloud-adoption-framework/ready/landing-zone/design-principles#subscription-democratization)
+
 If using Azure for remote store:
 
 Ensure for at least prod environment to follow guidance on locking down the state storage
@@ -106,6 +119,9 @@ The setup scripts create storage and a user-assigned identity for github access 
 Recommended for higher environments:
 
 - Set storage from public to private vnet
+- Isolated tfstate / tfplans to seperate subscription
+
+You could adopt components of the /bootstrap of [azure-samples/github-terraform-oidc-ci-cd](https://github.com/azure-samples/github-terraform-oidc-ci-cd) to implement these note however tfstate is only seperated by container.
 
 modules/ ← atomic modules only (one resource type each)
 ├── compute/
@@ -176,3 +192,5 @@ https://github.com/terraform-docs/gh-actions
 https://github.com/Azure-Samples/terraform-github-actions
 
 https://github.com/azure-samples/github-terraform-oidc-ci-cd
+
+https://www.terraform-best-practices.com/examples/terraform/medium-size-infrastructure

@@ -69,9 +69,13 @@ for env in "${envs[@]}"; do
     --name tfplans \
     --auth-mode login
 
-  echo "Creating Identity: $identity_name"
+  echo "Creating Identity: $identity_name and $identity_name-plan"
   az identity create -o none \
     --name "$identity_name" \
+    --resource-group "$resource_group"
+
+  az identity create -o none \
+    --name "$identity_name-plan" \
     --resource-group "$resource_group"
 
   # alternative older Service Principal / App registration if prefered

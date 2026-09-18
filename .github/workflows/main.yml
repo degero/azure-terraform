@@ -36,6 +36,7 @@ jobs:
       contents: read
       id-token: write
     strategy:
+      fail-fast: true # Explictly prevent
       max-parallel: 1
       matrix:
         environment: ${{ fromJSON(vars.TF_ENVIRONMENTS) }}

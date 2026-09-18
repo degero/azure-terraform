@@ -4,10 +4,10 @@ on:
   pull_request:
     branches: [main]
     paths:
-      - environments
-      - modules
-      - modulegroups
-      - tests
+      - "environments/**"
+      - "modules/**"
+      - "modulegroups/**"
+      - "tests/**"
 
 concurrency:
   group: terraform-plan-${{ github.event.pull_request.number }}
@@ -21,24 +21,26 @@ permissions:
 jobs:
   shared:
     uses: ./.github/workflows/_shared.yml
-  doco:
-    permissions:
-      contents: write
-    needs: plan
-    uses: ./.github/workflows/doco.yml
+
   plan:
+    needs: shared
     permissions:
       id-token: write
       contents: read
       pull-requests: write
-    needs: shared
     uses: ./.github/workflows/tf-plan.yml
     strategy:
-      max-parallel: 1 # run dev before test, and only if dev passes
       matrix:
         environment: ${{ fromJSON(vars.TF_ENVIRONMENTS) }}
     with:
       environment: ${{ matrix.environment }}
+  doco:
+    needs: paln
+    permissions:
+      contents: write
+    uses: ./.github/workflows/doco.yml
+  # If you want to apply to dev on PRs
+  # TODO comment out
   apply: # apply to lowest environment only
     needs: plan
     permissions:
@@ -46,4 +48,4 @@ jobs:
       id-token: write
     uses: ./.github/workflows/tf-apply.yml
     with:
-      environment: ${{ fromJSON(vars.TF_ENVIRONMENTS) }}[0]
+      environment: ${{ fromJSON(vars.TF_ENVIRONMENTS)[0] }}

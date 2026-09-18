@@ -45,7 +45,6 @@ read -ra repos <<< "$GITHUB_REPOS"
 new_envs=("$@")
 
 if [[ ${#new_envs[@]} -gt 0 ]]; then
-  # Appending: reject anything that already exists, then update .env in place
   for env in "${new_envs[@]}"; do
     if [[ " ${all_envs[*]} " =~ " ${env} " ]]; then
       echo "Error: '$env' already exists in .env's ENVS. Nothing to append." >&2
@@ -67,7 +66,6 @@ if [[ ${#new_envs[@]} -gt 0 ]]; then
 
   target_envs=("${new_envs[@]}")
 else
-  # No args: initial setup, provision everything currently in .env
   target_envs=("${all_envs[@]}")
 fi
 
@@ -95,8 +93,6 @@ build_json_array() {
   echo "$json"
 }
 
-all_envs_json=$(build_json_array "${all_envs[@]}")
-
 tenant_id=$(az account show --query tenantId -o tsv)
 subscription_id="${SUBSCRIPTION_ID:-$(az account show --query id -o tsv)}"
 
@@ -110,39 +106,68 @@ done
 
 for env in "${target_envs[@]}"; do
   resource_group="$RGPREFIX-$env"
-  identity_name="id-terraform-cicd-$env"
 
-  if ! az identity show -n "$identity_name" -g "$resource_group" &>/dev/null; then
-    echo "Skipping $env: identity $identity_name not found in $resource_group (has this env been set up yet?)" >&2
+  # apply identity: id-terraform-cicd-$env  (GH environment: $env, workflow: tf-apply.yml)
+  # plan identity:  id-terraform-cicd-$env-plan  (GH environment: $env-plan, workflow: tf-plan.yml)
+  apply_identity_name="id-terraform-cicd-$env"
+  plan_identity_name="id-terraform-cicd-$env-plan"
+
+  if ! az identity show -n "$apply_identity_name" -g "$resource_group" &>/dev/null; then
+    echo "Skipping $env: identity $apply_identity_name not found in $resource_group (has this env been set up yet?)" >&2
+    continue
+  fi
+  if ! az identity show -n "$plan_identity_name" -g "$resource_group" &>/dev/null; then
+    echo "Skipping $env: identity $plan_identity_name not found in $resource_group (has this env been set up yet?)" >&2
     continue
   fi
 
-  identity_client_id=$(az identity show -n "$identity_name" -g "$resource_group" --query clientId -o tsv)
+  apply_client_id=$(az identity show -n "$apply_identity_name" -g "$resource_group" --query clientId -o tsv)
+  plan_client_id=$(az identity show -n "$plan_identity_name" -g "$resource_group" --query clientId -o tsv)
 
   for repo in "${repos[@]}"; do
     repo_slug=$(slugify_repo "$repo")
+    repo_id=$(gh api "repos/$repo" --jq '.id')
 
-    echo "=== Provisioning GitHub Envionrments: $env / ${env}-plan for $repo ==="
+    owner="${repo%%/*}"
+    owner_id=$(gh api "users/$owner" --jq '.id' 2>/dev/null || gh api "orgs/$owner" --jq '.id')
 
-    for name in "$env" "${env}-plan"; do
-      echo "  -> federated credential for '$name'"
+    echo "=== Provisioning GitHub Environments: $env / ${env}-plan for $repo ==="
+
+    # name:GH-environment  identity_name  client_id  workflow-file
+    for stage in "apply" "plan"; do
+      if [[ "$stage" == "apply" ]]; then
+        name="$env"
+        identity_name="$apply_identity_name"
+        client_id="$apply_client_id"
+        workflow_file="tf-apply.yml"
+      else
+        name="${env}-plan"
+        identity_name="$plan_identity_name"
+        client_id="$plan_client_id"
+        workflow_file="tf-plan.yml"
+      fi
+
+      job_workflow_ref="${repo}/.github/workflows/${workflow_file}@refs/heads/main"
+      subject="repository_owner_id:${owner_id}:repository_id:${repo_id}:environment:${name}:job_workflow_ref:${job_workflow_ref}"
+
+      echo "  -> federated credential for '$name' (identity: $identity_name, workflow: $workflow_file)"
       az identity federated-credential create \
         --name "fic-github-$repo_slug-$name" \
         --identity-name "$identity_name" \
         --resource-group "$resource_group" \
         --issuer "https://token.actions.githubusercontent.com" \
-        --subject "repo:$repo:environment:$name" \
+        --subject "$subject" \
         --audiences "api://AzureADTokenExchange" \
         &>/dev/null
 
       echo "  -> ensuring GitHub Environment '$name' exists on $repo"
-      # PUT is idempotent: creates the environment if missing, no-ops if it exists
       gh api --method PUT "repos/$repo/environments/$name" >/dev/null
 
-      echo "  -> setting secrets for GitHub Environment '$name' on $repo"
-      gh secret set AZURE_CLIENT_ID --repo "$repo" --env "$name" --body "$identity_client_id"
-      gh secret set AZURE_TENANT_ID --repo "$repo" --env "$name" --body "$tenant_id"
-      gh secret set AZURE_SUBSCRIPTION_ID --repo "$repo" --env "$name" --body "$subscription_id"
+      echo "  -> setting variables for GitHub Environment '$name' on $repo"
+      gh variable set AZURE_CLIENT_ID --repo "$repo" --env "$name" --body "$client_id"
+      gh variable set AZURE_TENANT_ID --repo "$repo" --env "$name" --body "$tenant_id"
+      gh variable set AZURE_SUBSCRIPTION_ID --repo "$repo" --env "$name" --body "$subscription_id"
+      gh variable set TF_PLAN_STORAGE_ACCOUNT --repo "$repo" --env "$name" --body "addyourstorageaccoutnamehere"
     done
   done
 done
