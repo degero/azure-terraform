@@ -10,7 +10,7 @@ jobs:
   # checkov:
   #   runs-on: ubuntu-latest
   #   steps:
-  #     - uses: actions/checkout@v4
+  #     - uses: actions/checkout@v7
   #     - name: Checkov Terraform
   #       uses: bridgecrewio/checkov-action@a8664e3a0549367977f0cda990a34311835c87c0 #v12.3123.0
   #       with:
@@ -18,7 +18,7 @@ jobs:
   #         framework: terraform
   #     - name: Upload SARIF file
   #       if: success() || failure()
-  #       uses: github/codeql-action/upload-sarif@v3
+  #       uses: github/codeql-action/upload-sarif@v4
   #       with:
   #         sarif_file: results.sarif
   #         category: checkov

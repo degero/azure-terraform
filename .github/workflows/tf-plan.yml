@@ -49,7 +49,7 @@ jobs:
 
           echo "AZURE_CLIENT_ID=$CLIENT_ID" >> "$GITHUB_ENV"
           echo "AZURE_SUBSCRIPTION_ID=$SUB_ID" >> "$GITHUB_ENV"
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: ./.github/actions/tf-init
         with:
           working_directory: ${{ env.WORKING_DIR }}
@@ -59,7 +59,7 @@ jobs:
         run: terraform plan -var-file="${{ inputs.environment }}.tfvars" -out=tfplan
       - name: Terraform Output to PR
         if: always() && github.event_name == 'pull_request' && (steps.plan.outcome == 'success' || steps.plan.outcome == 'failure')
-        uses: actions/github-script@v7
+        uses: actions/github-script@v9
         env:
           TFPLAN_OUTPUT: "${{ format('{0}{1}', steps.plan.outputs.stdout, steps.plan.outputs.stderr) }}"
         with:
@@ -75,7 +75,7 @@ jobs:
       # TODO remove
       # - name: Post Plan
       #   if: always() && github.event_name == 'pull_request' && (steps.plan.outcome == 'success' || steps.plan.outcome == 'failure')
-      #   uses: robburger/terraform-pr-commenter@72c6e45eced6641488a6cf3ff104b7b9bda9c66c # v1.5.0
+      #   uses: robburger/terraform-pr-commenter@72c6e45eced6641488a6cf3ff104b7b9bda9c66c #v1.5.0
       #   with:
       #     commenter_type: plan
       #     commenter_input: ${{ format('{0}{1}', steps.plan.outputs.stdout, steps.plan.outputs.stderr) }}
@@ -102,7 +102,7 @@ jobs:
           soft_fail: false
           output_format: cli,sarif # sarif enables GitHub code scanning integration
           output_file_path: console,results.sarif
-      - uses: github/codeql-action/upload-sarif@v3
+      - uses: github/codeql-action/upload-sarif@v4
         with:
           sarif_file: results.sarif
           category: checkov

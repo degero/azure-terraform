@@ -10,7 +10,7 @@ updates:
   - package-ecosystem: terraform
     directory: /
     schedule:
-      interval: daily
+      interval: weekly
     commit-message:
       prefix: "chore"
       include: scope
