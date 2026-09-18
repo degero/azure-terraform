@@ -7,13 +7,6 @@ on:
         description: Deployment environment
         type: string
         default: "dev"
-    secrets:
-      AZURE_CLIENT_ID:
-        required: true
-      AZURE_SUBSCRIPTION_ID:
-        required: true
-      AZURE_TENANT_ID:
-        required: true
 
 permissions:
   id-token: write
@@ -21,17 +14,34 @@ permissions:
   pull-requests: write
 
 env:
-  ARM_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
-  ARM_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
-  ARM_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
   ARM_USE_OIDC: "true"
   WORKING_DIR: ./environments/${{ inputs.environment }}
   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  TFPLAN_STORAGE_ACCOUNT: ""
 
 jobs:
   plan:
     runs-on: ubuntu-latest
     steps:
+      - name: Resolve Azure identity for environment
+        env:
+          ALL_VARS: ${{ toJSON(vars) }}
+          ENVIRONMENT: ${{ inputs.environment }}
+        run: |
+          ENV_UPPER=$(echo "$ENVIRONMENT" | tr '[:lower:]' '[:upper:]')
+          CLIENT_ID_KEY="AZURE_CLIENT_ID_${ENV_UPPER}"
+          SUB_ID_KEY="AZURE_SUBSCRIPTION_ID_${ENV_UPPER}"
+
+          CLIENT_ID=$(echo "$ALL_VARS" | jq -r --arg k "$CLIENT_ID_KEY" '.[$k] // empty')
+          SUB_ID=$(echo "$ALL_VARS" | jq -r --arg k "$SUB_ID_KEY" '.[$k] // empty')
+
+          if [ -z "$CLIENT_ID" ] || [ -z "$SUB_ID" ]; then
+            echo "::error::No Azure config found for environment '$ENVIRONMENT' (expected variables $CLIENT_ID_KEY / $SUB_ID_KEY)"
+            exit 1
+          fi
+
+          echo "AZURE_CLIENT_ID=$CLIENT_ID" >> "$GITHUB_ENV"
+          echo "AZURE_SUBSCRIPTION_ID=$SUB_ID" >> "$GITHUB_ENV"
       - uses: actions/checkout@v4
       - uses: ./.github/actions/tf-init
         with:
@@ -40,25 +50,43 @@ jobs:
         id: plan
         working-directory: ${{ env.WORKING_DIR }}
         run: terraform plan -var-file="${{ inputs.environment }}.tfvars" -out=tfplan
-      - name: Post Plan
+      - name: Terraform Output to PR
         if: always() && github.event_name == 'pull_request' && (steps.plan.outcome == 'success' || steps.plan.outcome == 'failure')
-        uses: robburger/terraform-pr-commenter@72c6e45eced6641488a6cf3ff104b7b9bda9c66c # v1.5.0
+        uses: actions/github-script@v7
+        env:
+          TFPLAN_OUTPUT: "${{ format('{0}{1}', steps.plan.outputs.stdout, steps.plan.outputs.stderr) }}"
         with:
-          commenter_type: plan
-          commenter_input: ${{ format('{0}{1}', steps.plan.outputs.stdout, steps.plan.outputs.stderr) }}
-          commenter_exitcode: ${{ steps.plan.outputs.exitcode }}
+          github-token: ${{ secrets.TFPLAN_OUTPUT }}
+          script: |
+            const body = `${process.env.SUMMARY}`;
+            github.rest.issues.createComment({
+                issue_number: context.issue.number,
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                body: body
+            })
+      # TODO remove
+      # - name: Post Plan
+      #   if: always() && github.event_name == 'pull_request' && (steps.plan.outcome == 'success' || steps.plan.outcome == 'failure')
+      #   uses: robburger/terraform-pr-commenter@72c6e45eced6641488a6cf3ff104b7b9bda9c66c # v1.5.0
+      #   with:
+      #     commenter_type: plan
+      #     commenter_input: ${{ format('{0}{1}', steps.plan.outputs.stdout, steps.plan.outputs.stderr) }}
+      #     commenter_exitcode: ${{ steps.plan.outputs.exitcode }}
       - name: Convert plan to JSON
         working-directory: ${{ env.WORKING_DIR }}
         run: terraform show -json tfplan > tfplan.json
-      # If extra audit trail needed but sec risk
-      # - uses: actions/upload-artifact@v4
-      #   with:
-      #     name: ${{ inputs.environment }}-tfplan
-      #     path: ${{ env.WORKING_DIR }}/tfplan
-      # - uses: actions/upload-artifact@v4
-      #   with:
-      #     name: ${{ inputs.environment }}-tfplan-json
-      #     path: ${{ env.WORKING_DIR }}/tfplan.json
+
+      - name: Upload plan to blob storage
+        working-directory: ${{ env.WORKING_DIR }}
+        run: |
+          az storage blob upload \
+            --auth-mode login \
+            --account-name "${{ env.TFPLAN_STORAGE_ACCOUNT }}" \
+            --container-name tfplans \
+            --name "${{ inputs.environment }}/${{ github.run_id }}-${{ github.run_attempt }}/tfplan" \
+            --file tfplan \
+            --overwrite
       - name: Checkov scan (plan)
         uses: bridgecrewio/checkov-action@master
         with:
@@ -70,3 +98,4 @@ jobs:
       - uses: github/codeql-action/upload-sarif@v3
         with:
           sarif_file: results.sarif
+          category: checkov
