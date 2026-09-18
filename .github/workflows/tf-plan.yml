@@ -59,7 +59,7 @@ jobs:
         run: terraform plan -var-file="${{ inputs.environment }}.tfvars" -out=tfplan
       - name: Terraform Output to PR
         if: always() && github.event_name == 'pull_request' && (steps.plan.outcome == 'success' || steps.plan.outcome == 'failure')
-        uses: actions/github-script@v7
+        uses: actions/github-script@v9
         env:
           TFPLAN_OUTPUT: "${{ format('{0}{1}', steps.plan.outputs.stdout, steps.plan.outputs.stderr) }}"
         with:
