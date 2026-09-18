@@ -49,7 +49,7 @@ jobs:
 
           echo "AZURE_CLIENT_ID=$CLIENT_ID" >> "$GITHUB_ENV"
           echo "AZURE_SUBSCRIPTION_ID=$SUB_ID" >> "$GITHUB_ENV"
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: ./.github/actions/tf-init
         with:
           working_directory: ${{ env.WORKING_DIR }}
