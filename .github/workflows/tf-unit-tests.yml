@@ -1,0 +1,13 @@
+name: "Terraform Unit Tests"
+
+on:
+  push:
+
+permissions:
+  contents: read
+
+jobs:
+  terraform-unit-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4

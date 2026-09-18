@@ -71,7 +71,7 @@ tenant_id=$(az account show --query tenantId -o tsv)
 subscription_id="${SUBSCRIPTION_ID:-$(az account show --query id -o tsv)}"
 
 for env in "${envs[@]}"; do
-  resource_group="administration-tfstate-$env"
+  resource_group="$RGPREFIX-$env"
   identity_name="id-tf-cicd-$env"
 
   if ! az identity show -n "$identity_name" -g "$resource_group" &>/dev/null; then
@@ -79,15 +79,18 @@ for env in "${envs[@]}"; do
     continue
   fi
 
-  echo "=== Adding $repo ($ref) to environment: $env ==="
+  echo "=== Adding $repo federated-credential for github envionrment ${env} and ${env}-plan ==="
 
-  az identity federated-credential create \
-    --name "github-$env-$repo_slug" \
-    --identity-name "$identity_name" \
-    --resource-group "$resource_group" \
-    --issuer "https://token.actions.githubusercontent.com" \
-    --subject "repo:$repo:ref:$ref" \
-    --audiences "api://AzureADTokenExchange"
+  # Two federated credientials one for env and env-plan
+  for stage_suffix in "-plan" ""; do
+    az identity federated-credential create \
+      --name "github-${env}${stage_suffix//-/-}-$repo_slug" \
+      --identity-name "$identity_name" \
+      --resource-group "$resource_group" \
+      --issuer "https://token.actions.githubusercontent.com" \
+      --subject "repo:$repo:environment:${env}${stage_suffix}" \
+      --audiences "api://AzureADTokenExchange"
+  done
 
   if [[ "$setup_gh" == false ]]; then
     continue

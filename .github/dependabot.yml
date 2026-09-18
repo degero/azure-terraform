@@ -9,6 +9,8 @@ updates:
       include: "scope"
   - package-ecosystem: terraform
     directory: /
+    schedule:
+      interval: daily
     commit-message:
       prefix: "chore"
       include: scope

@@ -10,8 +10,8 @@ on:
       - tests
 
 concurrency:
-  group: terraform-apply
-  cancel-in-progress: false
+  group: terraform-plan-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
 
 permissions:
   id-token: write
@@ -21,7 +21,11 @@ permissions:
 jobs:
   shared:
     uses: ./.github/workflows/_shared.yml
-
+  doco:
+    permissions:
+      contents: write
+    needs: plan
+    uses: ./.github/workflows/doco.yml
   plan:
     permissions:
       id-token: write
@@ -32,16 +36,14 @@ jobs:
     strategy:
       max-parallel: 1 # run dev before test, and only if dev passes
       matrix:
-        environment: [dev, test] # Add more envs as needed
+        environment: ${{ fromJSON(vars.TF_ENVIRONMENTS) }}
     with:
       environment: ${{ matrix.environment }}
-    secrets:
-      AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
-      AZURE_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
-      AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
-
-  doco:
-    permissions:
-      contents: write
+  apply: # apply to lowest environment only
     needs: plan
-    uses: ./.github/workflows/doco.yml
+    permissions:
+      contents: read
+      id-token: write
+    uses: ./.github/workflows/tf-apply.yml
+    with:
+      environment: ${{ fromJSON(vars.TF_ENVIRONMENTS) }}[0]

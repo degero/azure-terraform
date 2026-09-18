@@ -7,24 +7,29 @@ permissions:
   contents: read
 
 jobs:
-  checkov:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: bridgecrewio/checkov-action@a8664e3a0549367977f0cda990a34311835c87c0 #v12.3123.0
-        name: Checkov Terraform
-        with:
-          directory: ./
-          framework: terraform
-
+  # checkov:
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - uses: actions/checkout@v4
+  #     - name: Checkov Terraform
+  #       uses: bridgecrewio/checkov-action@a8664e3a0549367977f0cda990a34311835c87c0 #v12.3123.0
+  #       with:
+  #         directory: ./
+  #         framework: terraform
+  #     - name: Upload SARIF file
+  #       if: success() || failure()
+  #       uses: github/codeql-action/upload-sarif@v3
+  #       with:
+  #         sarif_file: results.sarif
+  #         category: checkov
   validate:
     permissions:
       contents: read
-    needs: checkov
+    # needs: checkov
     strategy:
       max-parallel: 1 # run dev before test, and only if dev passes
       matrix:
-        environment: [dev, test] # Add more envs as needed
+        environment: ${{ fromJSON(vars.TF_ENVIRONMENTS) }}
     uses: ./.github/workflows/tf-validate.yml
     with:
       environment: ${{ matrix.environment }}

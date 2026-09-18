@@ -1,4 +1,3 @@
-# .github/workflows/deploy.yml
 name: Main
 
 on:
@@ -26,15 +25,10 @@ jobs:
     strategy:
       max-parallel: 1
       matrix:
-        environment: [dev, test]
+        environment: ${{ fromJSON(vars.TF_ENVIRONMENTS) }}
     uses: ./.github/workflows/tf-plan.yml
     with:
       environment: ${{ matrix.environment }}
-    secrets:
-      AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
-      AZURE_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
-      AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
-
   apply:
     needs: plan
     permissions:
@@ -43,11 +37,7 @@ jobs:
     strategy:
       max-parallel: 1
       matrix:
-        environment: [dev, test]
+        environment: ${{ fromJSON(vars.TF_ENVIRONMENTS) }}
     uses: ./.github/workflows/tf-apply.yml
     with:
       environment: ${{ matrix.environment }}
-    secrets:
-      AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
-      AZURE_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
-      AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}

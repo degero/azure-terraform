@@ -10,7 +10,8 @@ https://www.terraform-best-practices.com/examples/terraform/medium-size-infrastr
 ## Key components
 
 - Isolated 'environments' root terraform modules to reduce blast radius
-- Isolated terraform remote state storage by environment to reduce blast radius
+- Isolated terraform remote state blob storage by environment to reduce blast radius
+- TFPlan artifacts uploaded to blob storage (retention 7 days)
 - Role Based Access Control for state storage blob access
 - Named `/modules` files for easy location in VSCode (instead of lots of main.tf files)
 - Github Actions with: Linting, Formatting, Sec check (checkov), Environment controls for workflow approval
@@ -72,8 +73,8 @@ It is recommended to use a workspace for local dev to not interfere with the tfs
 
 ### Github Setup
 
-Setup Github Environment secrets for the Environments: AZURE_CLIENT_ID, AZURE_TENANT_ID, AZURE_SUBSCRIPTION_ID
-Setup protection rules and approvers for higher environments
+Create github envionrments with the same name used in scripts/administrators/.env by the script: setup-cicd-credentials.sh
+Setup Github 6 secrets for each github environment: AZURE_CLIENT_ID_ENVNAME, AZURE_TENANT_ID_ENVNAME, AZURE_SUBSCRIPTION_ID_ENVNAME and the same with \_PLAN suffix
 
 ### Azure setup
 
@@ -129,6 +130,14 @@ chmod +x ./scripts/prepush.sh
 ### Github
 
 ### Azure
+
+### Overview of env
+
+$env-plan   — no protection rules, deployment branches: "No restriction"
+$env — protection rules as appropriate (none for dev/test, required reviewers for staging/preprod)
+
+$env-plan SP  →  subject: repo:$repo:environment:$env-plan
+$env SP → subject: repo:$repo:environment:$env
 
 ## Links
 

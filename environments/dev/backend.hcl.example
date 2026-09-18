@@ -9,3 +9,4 @@ storage_account_name = "sttfstateshared001"
 container_name       = "tfstate"
 key                  = "appname/environment/terraform.tfstate"
 use_azuread_auth     = true
+# subscription_id    = "" # only needed if deployment target sub is different to this state storage one

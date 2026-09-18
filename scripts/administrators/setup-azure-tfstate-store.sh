@@ -63,6 +63,12 @@ for env in "${envs[@]}"; do
     --name tfstate \
     --auth-mode login
 
+  echo "Creating Blob container: tfplans"
+  az storage container create -o none \
+    --account-name "$storage_name" \
+    --name tfplans \
+    --auth-mode login
+
   echo "Creating Identity: $identity_name"
   az identity create -o none \
     --name "$identity_name" \
@@ -98,7 +104,7 @@ for env in "${envs[@]}"; do
   echo "AZURE_CLIENT_ID: $identity_client_id"
   echo "AZURE_TENANT_ID: $tenant_id"
   echo "AZURE_SUBSCRIPTION_ID: $subscription_id"
-  echo "Run 'setup-github-credentials.sh' to assign these in your github account"
+  echo "Run 'setup-cicd-credentials.sh' to assign these in your github account"
   echo ""
   echo ""
   echo "=== Done with environment: $env storage account: $storage_name resource group: $resource_group ==="
