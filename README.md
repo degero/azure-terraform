@@ -172,3 +172,7 @@ https://github.com/terraform-linters/tflint
 https://github.com/bridgecrewio/checkov
 
 https://github.com/terraform-docs/gh-actions
+
+https://github.com/Azure-Samples/terraform-github-actions
+
+https://github.com/azure-samples/github-terraform-oidc-ci-cd
