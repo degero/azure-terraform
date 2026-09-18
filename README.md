@@ -38,6 +38,15 @@ checkov
 
 ## Developer Setup
 
+If you have access, assign yourself access to the dev tfstate storage
+
+```
+az role assignment create \
+  --assignee "$(az ad signed-in-user show --query id -o tsv)" \
+  --role "Storage Blob Data Contributor" \
+  --scope "/subscriptions/<subscription-id>/resourceGroups/<resource-group>/providers/Microsoft.Storage/storageAccounts/<storage-account-name>/blobServices/default/containers/tfstate"
+```
+
 After cloning a repo:
 
 ```
@@ -45,7 +54,7 @@ git config core.hooksPath .githooks
 
 
 cd environments/dev
-./scripts/tf-init.sh/ps1
+../../scripts/tf-init.sh/ps1
 
 terraform workspace new <issuenumber> (so workspace is unique)
 
@@ -73,8 +82,15 @@ It is recommended to use a workspace for local dev to not interfere with the tfs
 
 ### Github Setup
 
+IMPORTANT: ensure all naming is the same / same case. safest to keep all as lowercase one word
+
+These are automated by scripts/setup-gh-environments.sh
+
+Setup github environments with names in TF_ENVIRONMENTS. You can start with just ["dev"] to get started
 Create github envionrments with the same name used in scripts/administrators/.env by the script: setup-cicd-credentials.sh
-Setup Github 6 secrets for each github environment: AZURE_CLIENT_ID_ENVNAME, AZURE_TENANT_ID_ENVNAME, AZURE_SUBSCRIPTION_ID_ENVNAME and the same with \_PLAN suffix
+
+Setup Github 6 secrets for each github environment: AZURE_CLIENT_ID_ENVNAME, AZURE_TENANT_ID_ENVNAME,
+AZURE_SUBSCRIPTION_ID_ENVNAME and the same with \_PLAN suffix
 
 ### Azure setup
 

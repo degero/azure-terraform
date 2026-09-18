@@ -104,9 +104,12 @@ for env in "${envs[@]}"; do
   echo "AZURE_CLIENT_ID: $identity_client_id"
   echo "AZURE_TENANT_ID: $tenant_id"
   echo "AZURE_SUBSCRIPTION_ID: $subscription_id"
-  echo "Run 'setup-cicd-credentials.sh' to assign these in your github account"
+  echo "Run 'setup-cicd-credentials.sh' to assign these in your github account and setup deployment environments"
+  echo ""W
+  echo "=== Settings for your /environments/$env/backend.hcl file =="
+  echo "resource_group_name = "$resource_group""
+  echo "storage_account_name = "$storage_name""
   echo ""
-  echo ""
-  echo "=== Done with environment: $env storage account: $storage_name resource group: $resource_group ==="
+  echo "=== Done with environment: $env creation ==="
   echo
 done
