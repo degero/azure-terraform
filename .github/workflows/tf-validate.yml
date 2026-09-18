@@ -1,4 +1,4 @@
-name: Terraform validate
+name: Terraform Validate
 
 on:
   workflow_call:

@@ -129,6 +129,14 @@ chmod +x ./scripts/prepush.sh
 
 ### Github
 
+#### Environments
+
+For each target environment workflows expect two Github Environments: env and env-plan. This is done to allow env based var/secret acesss and independent approval gating.
+
+#### Release please
+
+Change in github: Settings->General->Pull Requests->Default Commit Message as PR title. This allow release please to correctly pick up and compose release notes on release.
+
 ### Azure
 
 ### Overview of env
