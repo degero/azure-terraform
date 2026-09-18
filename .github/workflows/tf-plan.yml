@@ -14,10 +14,7 @@ permissions:
   pull-requests: write
 
 env:
-  ARM_USE_OIDC: "true"
-  WORKING_DIR: ./environments/${{ inputs.environment }}
   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-  TFPLAN_STORAGE_ACCOUNT: ""
 
 jobs:
   plan:
@@ -29,6 +26,7 @@ jobs:
       ARM_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
       ARM_USE_OIDC: "true"
       WORKING_DIR: ./environments/${{ inputs.environment }}
+      TFPLAN_STORAGE_ACCOUNT: ${{ secrets.TFPLAN_STORAGE_ACCOUNT }}
     steps:
       - uses: actions/checkout@v7
       - uses: ./.github/actions/tf-init

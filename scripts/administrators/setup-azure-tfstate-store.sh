@@ -104,6 +104,7 @@ for env in "${envs[@]}"; do
   echo "AZURE_CLIENT_ID: $identity_client_id"
   echo "AZURE_TENANT_ID: $tenant_id"
   echo "AZURE_SUBSCRIPTION_ID: $subscription_id"
+  echo "TFPLAN_STORAGE_ACCOUNT: $storage_name"
   echo "Run 'setup-cicd-credentials.sh' to assign these in your github account and setup deployment environments"
   echo ""W
   echo "=== Settings for your /environments/$env/backend.hcl file =="

@@ -92,6 +92,8 @@ Create github envionrments with the same name used in scripts/administrators/.en
 Setup Github 6 secrets for each github environment: AZURE_CLIENT_ID_ENVNAME, AZURE_TENANT_ID_ENVNAME,
 AZURE_SUBSCRIPTION_ID_ENVNAME and the same with \_PLAN suffix
 
+IMPORTANT: You will need to manually add the secret TFPLAN_STORAGE_ACCOUNT to each envs secrets (based on the state storage for that env)
+
 ### Azure setup
 
 If using Azure for remote store:
