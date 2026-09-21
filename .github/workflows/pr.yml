@@ -50,7 +50,7 @@ jobs:
   # If you want to apply to dev on PRs
   # TODO comment out
   apply: # apply to lowest environment only
-    needs: doco
+    needs: [plan, doco]
     name: Terraform Apply
     permissions:
       contents: read
@@ -58,3 +58,4 @@ jobs:
     uses: ./.github/workflows/tf-apply.yml
     with:
       environment: ${{ fromJSON(vars.TF_ENVIRONMENTS)[0] }}
+      plan_blob_name: ${{ needs.plan.outputs.plan_blob_name }}

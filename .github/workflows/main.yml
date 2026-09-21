@@ -51,3 +51,4 @@ jobs:
     uses: ./.github/workflows/tf-apply.yml
     with:
       environment: ${{ matrix.environment }}
+      plan_blob_name: ${{ jobs.plan.outputs.plan_blob_name }}

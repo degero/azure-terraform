@@ -7,6 +7,9 @@ on:
         description: Deployment environment
         type: string
         default: "dev"
+    outputs:
+      plan_blob_name:
+        value: ${{ jobs.plan.outputs.plan_blob_name }}
 
 env:
   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -21,6 +24,8 @@ jobs:
       contents: read
       pull-requests: write
       security-events: write
+    outputs:
+      plan_blob_name: ${{ steps.plan_path.outputs.plan_blob_name }}
     env:
       ARM_CLIENT_ID: ${{ vars.AZURE_CLIENT_ID }}
       ARM_SUBSCRIPTION_ID: ${{ vars.AZURE_SUBSCRIPTION_ID }}
@@ -34,6 +39,9 @@ jobs:
       - uses: ./.github/actions/tf-init
         with:
           working_directory: ${{ env.WORKING_DIR }}
+      - name: Terraform plan blob name
+        id: plan_path
+        run: echo "plan_blob_name=${{ github.repository }}/${{ inputs.environment }}/${{ github.run_id }}-${{ github.run_attempt }}/tfplan" >> "$GITHUB_OUTPUT"
       - name: Terraform Plan
         id: plan
         working-directory: ${{ env.WORKING_DIR }}
@@ -77,7 +85,7 @@ jobs:
             --auth-mode login \
             --account-name "${{ vars.TF_PLAN_STORAGE_ACCOUNT }}" \
             --container-name tfplans \
-            --name "${{ github.repository }}/${{ inputs.environment }}/${{ github.run_id }}-${{ github.run_attempt }}/tfplan" \
+            --name steps.plan_path.outputs.name \
             --file tfplan \
             --overwrite
       - name: Checkov Terraform (tfplan)

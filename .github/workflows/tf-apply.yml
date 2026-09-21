@@ -7,6 +7,9 @@ on:
         description: Deployment environment
         type: string
         default: "dev"
+      plan_blob_name:
+        description: TF plan blob name
+        type: string
 
 jobs:
   apply:
@@ -35,16 +38,15 @@ jobs:
           client-id: ${{ vars.AZURE_CLIENT_ID }}
           tenant-id: ${{ vars.AZURE_TENANT_ID }}
           subscription-id: ${{ vars.AZURE_SUBSCRIPTION_ID }}
-      - name: Upload plan to blob storage
+      - name: Download plan from blob storage
         working-directory: ${{ env.WORKING_DIR }}
         run: |
-          az storage blob upload \
-            --auth-mode login \
-            --account-name "${{ vars.TF_PLAN_STORAGE_ACCOUNT }}" \
-            --container-name tfplans \
-            --name "${{ github.repository }}/${{ inputs.environment }}/${{ github.run_id }}-${{ github.run_attempt }}/tfplan" \
-            --file tfplan \
-            --overwrite
+          az storage blob download \
+           --auth-mode login \
+           --account-name "${{ vars.TF_PLAN_STORAGE_ACCOUNT }}" \
+           --container-name tfplans \
+           --name "${{ inputs.plan_blob_name }}" \
+           --file tfplan
       - name: Terraform Apply
         working-directory: ${{ env.WORKING_DIR }}
         run: terraform apply -auto-approve tfplan
