@@ -21,12 +21,12 @@ jobs:
     runs-on: ubuntu-latest
     environment: ${{ inputs.environment }}-plan
     env:
-      ARM_CLIENT_ID: ${{ var.AZURE_CLIENT_ID }}
-      ARM_SUBSCRIPTION_ID: ${{ var.AZURE_SUBSCRIPTION_ID }}
-      ARM_TENANT_ID: ${{ var.AZURE_TENANT_ID }}
+      ARM_CLIENT_ID: ${{ vars.AZURE_CLIENT_ID }}
+      ARM_SUBSCRIPTION_ID: ${{ vars.AZURE_SUBSCRIPTION_ID }}
+      ARM_TENANT_ID: ${{ vars.AZURE_TENANT_ID }}
       ARM_USE_OIDC: true
       WORKING_DIR: ./environments/${{ inputs.environment }}
-      TFPLAN_STORAGE_ACCOUNT: ${{ var.TF_PLAN_STORAGE_ACCOUNT }}
+      TFPLAN_STORAGE_ACCOUNT: ${{ vars.TF_PLAN_STORAGE_ACCOUNT }}
       TF_INPUT: 0
     steps:
       - uses: actions/checkout@v7
