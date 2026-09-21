@@ -41,12 +41,12 @@ for env in "${envs[@]}"; do
   suffix=$(random_suffix)
   storage_name="sttfstate${env}${suffix}"
   resource_group="$RGPREFIX-$env"
-  identity_name="id-terraform-cicd-$env"
 
   echo "Creating RG: $resource_group =="
   az group create -o none -n "$resource_group" -l "$LOCATION"
 
   echo "Creating StorageAccount: $storage_name"
+  # This is not locked down for ease of demo purposes, not recommended for prod
   az storage account create -o none \
     -n "$storage_name" \
     -g "$resource_group" \
@@ -71,40 +71,43 @@ for env in "${envs[@]}"; do
     --name tfplans \
     --auth-mode login
 
-  echo "Creating Identity: $identity_name and $identity_name-plan"
-  az identity create -o none \
-    --name "$identity_name" \
-    --resource-group "$resource_group"
+  identity_name_apply="id-terraform-cicd-apply-$env"
+  identity_name_plan="id-terraform-cicd-plan-$env"
+  echo "Creating Identity: $identity_name_apply and $identity_name_plan"
 
-  az identity create -o none \
-    --name "$identity_name-plan" \
-    --resource-group "$resource_group"
+  for identity_name in "$identity_name_apply" "$identity_name_plan"; do
+    az identity create -o none \
+      --name "$identity_name" \
+      --resource-group "$resource_group"
 
-  # alternative older Service Principal / App registration if prefered
-  # az ad app create --display-name "app-terraform"
-  # # note the appId (client ID) and the app object id
-  # $assignee = "" # the appid
-  # $appObjectId = ""
-  # az ad sp create --id $assignee
+    # alternative older Service Principal / App registration if prefered
+    # az ad app create --display-name "app-terraform"
+    # # note the appId (client ID) and the app object id
+    # $assignee = "" # the appid
+    # $appObjectId = ""
+    # az ad sp create --id $assignee
 
-  identity_principal_id=$(az_tsv identity show -n "$identity_name" -g "$resource_group" --query principalId -o tsv)
-  identity_client_id=$(az_tsv identity show -n "$identity_name" -g "$resource_group" --query clientId -o tsv)
-  echo "Identity principalId: ${identity_principal_id} clientId: ${identity_client_id}"
+    identity_principal_id=$(az_tsv identity show -n "$identity_name" -g "$resource_group" --query principalId -o tsv)
+    identity_client_id=$(az_tsv identity show -n "$identity_name" -g "$resource_group" --query clientId -o tsv)
+    echo "Identity principalId: ${identity_principal_id} clientId: ${identity_client_id}"
 
-  echo "Assigning Role Contributor on /subscriptions/${deployment_subscription_id} for ${identity_name}"
-  az role assignment create -o none \
-    --assignee-object-id $identity_principal_id \
-    --assignee-principal-type ServicePrincipal \
-    --role "Contributor" \
-    --scope "/subscriptions/${deployment_subscription_id}"
+    echo "Assigning Role Contributor on /subscriptions/${deployment_subscription_id} for ${identity_name}"
 
-  echo "Assigning Role 'Storage Blob Data Contributor' on StorageAccount ${storage_name} for ${identity_name}"
-  az role assignment create -o none \
-    --assignee-object-id $identity_principal_id \
-    --assignee-principal-type ServicePrincipal \
-    --role "Storage Blob Data Contributor" \
-    --scope "/subscriptions/${subscription_id}/resourceGroups/${resource_group}/providers/Microsoft.Storage/storageAccounts/${storage_name}"
+   # This is not locked down for ease of demo purposes, not recommended for prod
+    az role assignment create -o none \
+      --assignee-object-id $identity_principal_id \
+      --assignee-principal-type ServicePrincipal \
+      --role "Contributor" \
+      --scope "/subscriptions/${deployment_subscription_id}"
 
+    echo "Assigning Role 'Storage Blob Data Contributor' on StorageAccount ${storage_name} for ${identity_name}"
+    az role assignment create -o none \
+      --assignee-object-id $identity_principal_id \
+      --assignee-principal-type ServicePrincipal \
+      --role "Storage Blob Data Contributor" \
+      --scope "/subscriptions/${subscription_id}/resourceGroups/${resource_group}/providers/Microsoft.Storage/storageAccounts/${storage_name}"
+
+  done
 
   echo "=== Github Env secrets to add for Environment: $env ==="
   echo "AZURE_CLIENT_ID: $identity_client_id"
@@ -113,7 +116,7 @@ for env in "${envs[@]}"; do
   echo "TFPLAN_STORAGE_ACCOUNT: $storage_name"
   echo "Run 'setup-cicd-credentials.sh' to assign these in your github account and setup deployment environments"
   echo ""W
-  echo "=== Settings to add to your /environments/$env/backend.hcl file =="
+  echo "=== Settings to add to your /environments/$env/backend.hcl file - Ensure devs have Storage Blob Data Contributor access =="
   echo "resource_group_name = "$resource_group""
   echo "storage_account_name = "$storage_name""
   echo ""

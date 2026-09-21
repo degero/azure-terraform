@@ -111,10 +111,8 @@ for i in "${!target_envs[@]}"; do
   resource_group="$RGPREFIX-$env"
   storage_account=${tfplan_accounts[$i]}
 
-  # apply identity: id-terraform-cicd-$env  (GH environment: $env, workflow: tf-apply.yml)
-  # plan identity:  id-terraform-cicd-$env-plan  (GH environment: $env-plan, workflow: tf-plan.yml)
-  apply_identity_name="id-terraform-cicd-$env"
-  plan_identity_name="id-terraform-cicd-$env-plan"
+  apply_identity_name="id-terraform-cicd-apply-$env"
+  plan_identity_name="id-terraform-cicd-plan-$env"
 
   if ! az identity show -n "$apply_identity_name" -g "$resource_group" &>/dev/null; then
     echo "Skipping $env: identity $apply_identity_name not found in $resource_group (has this env been set up yet?)" >&2
