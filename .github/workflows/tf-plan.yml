@@ -35,7 +35,7 @@ jobs:
       - name: Terraform Plan
         id: plan
         working-directory: ${{ env.WORKING_DIR }}
-        run: terraform plan -var-file="${{ inputs.environment }}.tfvars" -out=tfplan
+        run: terraform plan -var-file=terraform.tfvars -out=tfplan
       - name: Terraform Output to PR
         if: always() && github.event_name == 'pull_request' && (steps.plan.outcome == 'success' || steps.plan.outcome == 'failure')
         uses: actions/github-script@v9
