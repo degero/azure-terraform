@@ -1,0 +1,2 @@
+# terraform.tfvars - only add non-sensitive data
+location    = "eastus"
