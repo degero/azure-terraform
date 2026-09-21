@@ -113,7 +113,7 @@ for env in "${envs[@]}"; do
   echo "TFPLAN_STORAGE_ACCOUNT: $storage_name"
   echo "Run 'setup-cicd-credentials.sh' to assign these in your github account and setup deployment environments"
   echo ""W
-  echo "=== Settings for your /environments/$env/backend.hcl file =="
+  echo "=== Settings to add to your /environments/$env/backend.hcl file =="
   echo "resource_group_name = "$resource_group""
   echo "storage_account_name = "$storage_name""
   echo ""
