@@ -8,6 +8,7 @@ on:
 
 jobs:
   analyze:
+    runs-on: ubuntu-latest
     name: Analyze (${{ matrix.language }})
     strategy:
       matrix:

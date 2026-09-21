@@ -35,14 +35,14 @@ jobs:
     with:
       environment: ${{ matrix.environment }}
   doco:
-    needs: paln
+    needs: plan
     permissions:
       contents: write
     uses: ./.github/workflows/doco.yml
   # If you want to apply to dev on PRs
   # TODO comment out
   apply: # apply to lowest environment only
-    needs: plan
+    needs: doco
     permissions:
       contents: read
       id-token: write
