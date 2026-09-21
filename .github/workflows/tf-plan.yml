@@ -85,7 +85,7 @@ jobs:
             --auth-mode login \
             --account-name "${{ vars.TF_PLAN_STORAGE_ACCOUNT }}" \
             --container-name tfplans \
-            --name steps.plan_path.outputs.name \
+            --name steps.plan_path.outputs.plan_blob_name \
             --file tfplan \
             --overwrite
       - name: Checkov Terraform (tfplan)
