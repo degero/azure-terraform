@@ -44,11 +44,11 @@ jobs:
       contents: read
       id-token: write
     strategy:
-      fail-fast: true # Explictly prevent
+      fail-fast: true # Explicitly prevent
       max-parallel: 1
       matrix:
         environment: ${{ fromJSON(vars.TF_ENVIRONMENTS) }}
     uses: ./.github/workflows/tf-apply.yml
     with:
       environment: ${{ matrix.environment }}
-      plan_blob_name: ${{ jobs.plan.outputs.plan_blob_name }}
+      plan_blob_name: ${{ needs.plan.outputs.plan_blob_name }}
