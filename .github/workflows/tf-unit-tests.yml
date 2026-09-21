@@ -1,14 +1,14 @@
 name: Terraform Unit Tests
 
 on:
-  push:
-
-permissions:
-  contents: read
+  workflow_dispatch:
+  workflow_call:
 
 jobs:
   terraform-unit-tests:
     name: Terraform Unit Tests
+    permissions:
+      contents: read
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7

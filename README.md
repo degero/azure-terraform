@@ -146,13 +146,15 @@ modules/ ← atomic modules only (one resource type each)
 └── keyvault/
 
 compositions/ ← composite modules (patterns of primitives)
-└── function-app/
+├── function-app/
 ├── function-app.tf # calls modules/compute/functionapp + modules/storage/account
 ├── variables.tf
 └── outputs.tf
 
 environments/
-└── dev/
+├── dev/
+├── terraform.tfvars
+├── backend.hcl
 └── main.tf # calls compositions/function-app, modules/networking, etc.
 
 ### Azure tooling
