@@ -8,12 +8,11 @@ on:
         type: string
         default: "dev"
 
-permissions:
-  contents: read
-
 jobs:
   tf-validate:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     env:
       WORKING_DIR: ./environments/${{ inputs.environment }}
       ARM_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}

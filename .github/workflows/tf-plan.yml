@@ -8,11 +8,6 @@ on:
         type: string
         default: "dev"
 
-permissions:
-  id-token: write
-  contents: read
-  pull-requests: write
-
 env:
   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
@@ -20,6 +15,10 @@ jobs:
   plan:
     runs-on: ubuntu-latest
     environment: ${{ inputs.environment }}-plan
+    permissions:
+      id-token: write
+      contents: read
+      pull-requests: write
     env:
       ARM_CLIENT_ID: ${{ vars.AZURE_CLIENT_ID }}
       ARM_SUBSCRIPTION_ID: ${{ vars.AZURE_SUBSCRIPTION_ID }}

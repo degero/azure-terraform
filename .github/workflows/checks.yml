@@ -3,9 +3,6 @@ name: Checks
 on:
   workflow_call:
 
-permissions:
-  contents: read
-
 jobs:
   # checkov:
   #   runs-on: ubuntu-latest
