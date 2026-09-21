@@ -8,6 +8,7 @@ jobs:
     name: Checkov Terraform (entire repo)
     permissions:
       contents: read
+      actions: read # for private repo
       security-events: write
     runs-on: ubuntu-latest
     steps:
@@ -28,9 +29,7 @@ jobs:
           category: checkov
   validate:
     name: Terraform Validate
-    permissions:
-      contents: read
-    # needs: checkov
+    needs: checkov
     strategy:
       max-parallel: 1 # run dev before test, and only if dev passes
       matrix:

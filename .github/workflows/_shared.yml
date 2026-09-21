@@ -11,5 +11,6 @@ jobs:
     needs: lint
     permissions:
       contents: read
+      actions: read # for private repo
       security-events: write
     uses: ./.github/workflows/checks.yml

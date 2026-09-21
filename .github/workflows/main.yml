@@ -17,6 +17,8 @@ jobs:
   shared:
     name: Shared
     permissions:
+      contents: read
+      actions: read # for private repo
       security-events: write
     uses: ./.github/workflows/_shared.yml
 
