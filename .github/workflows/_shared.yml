@@ -3,10 +3,6 @@ name: Shared
 on:
   workflow_call:
 
- permissions:
-    contents: read
-    security-events: write
-
 jobs:
   lint:
     uses: ./.github/workflows/lint.yml

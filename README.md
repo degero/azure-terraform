@@ -9,9 +9,8 @@ This template is focused on the terraform and github cicd it is not opinionated 
 ## Key components
 
 - Isolated /environments/env-name root terraform modules to reduce blast radius / increased flexibility
-- Isolated terraform federated credentials and remote state blob storage by environment
+- Isolated terraform federated credentials + 2 UMAI per env (plan,apply) + RBAC to blob storage by environment (tfstate, tfplans containers)
 - TFPlan artifacts uploaded to blob storage (retention 7 days)
-- Azure Role Based Access Control for state storage blob access and OIDC infra deployment
 - Named `/modules` files for easy location in VSCode (instead of lots of main.tf files)
 - Github Workflows with: Linting (tflint), Formatting (terraform fmt), Sec check (checkov), Github Environments for workflow approval, Dependabot (terraform, github actions), Doco generation (terraform-docs), Terraform Validate
 - Pre-push hook to lint and (optionally) run checkov locally
