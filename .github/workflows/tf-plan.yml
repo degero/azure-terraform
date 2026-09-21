@@ -74,7 +74,7 @@ jobs:
         run: |
           az storage blob upload \
             --auth-mode login \
-            --account-name "${{ env.TF_PLAN_STORAGE_ACCOUNT }}" \
+            --account-name "${{ vars.TF_PLAN_STORAGE_ACCOUNT }}" \
             --container-name tfplans \
             --name "${{ github.repository }}/${{ inputs.environment }}/${{ github.run_id }}-${{ github.run_attempt }}/tfplan" \
             --file tfplan \
