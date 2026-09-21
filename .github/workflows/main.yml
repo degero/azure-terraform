@@ -16,6 +16,8 @@ concurrency:
 jobs:
   shared:
     name: Shared
+    permissions:
+      security-events: write
     uses: ./.github/workflows/_shared.yml
 
   plan:
@@ -25,6 +27,7 @@ jobs:
       id-token: write
       contents: read
       pull-requests: write
+      security-events: write
     strategy:
       max-parallel: 1
       matrix:

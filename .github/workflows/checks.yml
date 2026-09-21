@@ -4,21 +4,28 @@ on:
   workflow_call:
 
 jobs:
-  # checkov:
-  #   runs-on: ubuntu-latest
-  #   steps:
-  #     - uses: actions/checkout@v7
-  #     - name: Checkov Terraform
-  #       uses: bridgecrewio/checkov-action@a8664e3a0549367977f0cda990a34311835c87c0 #v12.3123.0
-  #       with:
-  #         directory: ./
-  #         framework: terraform
-  #     - name: Upload SARIF file
-  #       if: success() || failure()
-  #       uses: github/codeql-action/upload-sarif@v4
-  #       with:
-  #         sarif_file: results.sarif
-  #         category: checkov
+  checkov:
+    name: Checkov Terraform (entire repo)
+    permissions:
+      contents: read
+      security-events: write
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - name: Checkov Terraform
+        uses: bridgecrewio/checkov-action@a8664e3a0549367977f0cda990a34311835c87c0 #v12.3123.0
+        with:
+          directory: ./
+          framework: terraform
+          soft_fail: false
+          output_format: cli,sarif
+          output_file_path: console,results.sarif
+      - name: Upload SARIF file
+        if: success() || failure()
+        uses: github/codeql-action/upload-sarif@v4
+        with:
+          sarif_file: results.sarif
+          category: checkov
   validate:
     name: Terraform Validate
     permissions:

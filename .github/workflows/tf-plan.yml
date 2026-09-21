@@ -80,13 +80,13 @@ jobs:
             --name "${{ github.repository }}/${{ inputs.environment }}/${{ github.run_id }}-${{ github.run_attempt }}/tfplan" \
             --file tfplan \
             --overwrite
-      - name: Checkov scan (plan)
+      - name: Checkov Terraform (tfplan)
         uses: bridgecrewio/checkov-action@master
         with:
           file: ${{ env.WORKING_DIR }}/tfplan.json
           framework: terraform_plan
           soft_fail: false
-          output_format: cli,sarif # sarif enables GitHub code scanning integration
+          output_format: cli,sarif
           output_file_path: console,results.sarif
       - uses: github/codeql-action/upload-sarif@v4
         with:
