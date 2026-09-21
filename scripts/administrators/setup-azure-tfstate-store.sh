@@ -71,6 +71,35 @@ for env in "${envs[@]}"; do
     --name tfplans \
     --auth-mode login
 
+  cat > policy.json <<'EOF'
+{
+  "rules": [
+    {
+      "enabled": true,
+      "name": "delete-tfplans-after-7d",
+      "type": "Lifecycle",
+      "definition": {
+        "filters": {
+          "blobTypes": ["blockBlob"],
+          "prefixMatch": ["tfplans/"]
+        },
+        "actions": {
+          "baseBlob": {
+            "delete": { "daysAfterCreationGreaterThan": 7 }
+          }
+        }
+      }
+    }
+  ]
+}
+EOF
+
+  az storage account management-policy create \
+    --account-name "$TF_PLAN_STORAGE_ACCOUNT" \
+    --resource-group "$RG" \
+    --policy @policy.json
+
+
   identity_name_apply="id-terraform-cicd-apply-$env"
   identity_name_plan="id-terraform-cicd-plan-$env"
   echo "Creating Identity: $identity_name_apply and $identity_name_plan"
