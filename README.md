@@ -25,6 +25,14 @@ azure-terraform-template
 ├── modules/ - Terraform modules used by environments
 └── scripts/ - Az CLI scripts to setup terraform remote state store and github actions access to azure
 
+## Terraform AzureRM authentication
+
+use_azuread_auth = true
+use_oidc = true
+
+- OpenID Connect / Workload identity federation (Recommended by Hashicorp)
+- User Assigned Managed Identity with Federated Credentials (Recommended by Hashicorp)
+
 ## Requirements
 
 ## Administrators
@@ -57,6 +65,8 @@ az role assignment create \
   --role "Storage Blob Data Contributor" \
   --scope "/subscriptions/<subscription-id>/resourceGroups/<resource-group>/providers/Microsoft.Storage/storageAccounts/<storage-account-name>/blobServices/default/containers/tfstate"
 ```
+
+NOTE: If state storage is in a different subscription or tenant you will need access to these.
 
 After cloning a repo:
 
@@ -194,3 +204,5 @@ https://github.com/Azure-Samples/terraform-github-actions
 https://github.com/azure-samples/github-terraform-oidc-ci-cd
 
 https://www.terraform-best-practices.com/examples/terraform/medium-size-infrastructure
+
+https://developer.hashicorp.com/terraform/language/backend/azurerm

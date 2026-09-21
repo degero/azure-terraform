@@ -38,9 +38,14 @@ set +a
 : "${ENVS:?ENVS is not set in .env}"
 : "${GITHUB_REPOS:?GITHUB_REPOS is not set in .env}"
 : "${RGPREFIX:?RGPREFIX is not set in .env}"
+: "${AZURE_TENANT_ID:?AZURE_TENANT_ID is not set in .env}"
+: "${AZURE_SUBSCRIPTION_ID:?AZURE_SUBSCRIPTION_ID is not set in .env}"
+: "${TFPLAN_STORAGE_ACCOUNTS:?TFPLAN_STORAGE_ACCOUNTS is not set in .env}"
+
 
 read -ra all_envs <<< "$ENVS"
 read -ra repos <<< "$GITHUB_REPOS"
+read -ra tfplan_accounts <<< "$TFPLAN_STORAGE_ACCOUNTS"
 
 new_envs=("$@")
 
@@ -93,9 +98,6 @@ build_json_array() {
   echo "$json"
 }
 
-tenant_id=$(az account show --query tenantId -o tsv)
-subscription_id="${SUBSCRIPTION_ID:-$(az account show --query id -o tsv)}"
-
 # TF_ENVIRONMENTS always reflects the full (post-append) .env list
 all_envs_json=$(build_json_array "${all_envs[@]}")
 
@@ -104,8 +106,10 @@ for repo in "${repos[@]}"; do
   gh variable set TF_ENVIRONMENTS --repo "$repo" --body "$all_envs_json"
 done
 
-for env in "${target_envs[@]}"; do
+for i in "${!target_envs[@]}"; do
+  env=${target_envs[$i]}
   resource_group="$RGPREFIX-$env"
+  storage_account=${tfplan_accounts[$i]}
 
   # apply identity: id-terraform-cicd-$env  (GH environment: $env, workflow: tf-apply.yml)
   # plan identity:  id-terraform-cicd-$env-plan  (GH environment: $env-plan, workflow: tf-plan.yml)
@@ -165,9 +169,9 @@ for env in "${target_envs[@]}"; do
 
       echo "  -> setting variables for GitHub Environment '$name' on $repo"
       gh variable set AZURE_CLIENT_ID --repo "$repo" --env "$name" --body "$client_id"
-      gh variable set AZURE_TENANT_ID --repo "$repo" --env "$name" --body "$tenant_id"
-      gh variable set AZURE_SUBSCRIPTION_ID --repo "$repo" --env "$name" --body "$subscription_id"
-      gh variable set TF_PLAN_STORAGE_ACCOUNT --repo "$repo" --env "$name" --body "addyourstorageaccoutnamehere"
+      gh variable set AZURE_TENANT_ID --repo "$repo" --env "$name" --body "$AZURE_TENANT_ID"
+      gh variable set AZURE_SUBSCRIPTION_ID --repo "$repo" --env "$name" --body "$AZURE_SUBSCRIPTION_ID"
+      gh variable set TF_PLAN_STORAGE_ACCOUNT --repo "$repo" --env "$name" --body "$storage_account"
     done
   done
 done

@@ -2,11 +2,13 @@
 # -backend-config flags in CI. Each environment MUST use a distinct
 # storage account/container/key combination or state files will collide.
 #
-# terraform init -backend-config=backend.hcl
+# !IMPORTANT!: do not add access_key, sas_token or client_secret here, recommended to use azure OIDC user assigned managed identity.
+#
+# Usage: terraform init -backend-config="backend.hcl"
 
-resource_group_name  = "rg-tfstate-shared"
-storage_account_name = "sttfstateshared001"
-container_name       = "tfstate"
-key                  = "appname/environment/terraform.tfstate"
-use_azuread_auth     = true
-# subscription_id    = "" # only needed if deployment target sub is different to this state storage one
+# subscription_id    = "" # only needed if state storage sub_id is different to the deployment sub_id
+# tenant_id          = "" # only needed if state storage sub is in another tenant
+resource_group_name  = "" # eg: rg-tfstate-shared
+storage_account_name = "" # eg: sttfstateshared001
+container_name       = "tfstate" # Leave as this
+key                  = "" # app-or-projname/environment/terraform.tfstate eg: helloworld/dev/terraform.tfstate

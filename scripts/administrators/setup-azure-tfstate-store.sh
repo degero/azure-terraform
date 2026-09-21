@@ -23,15 +23,17 @@ az_tsv() {
   az "$@" -o tsv | tr -d '\r'
 }
 
-# get the az cli account subscriptionid
-subscription_id=$(az_tsv account show --query id -o tsv)
-tenant_id=$(az_tsv account show --query tenantId -o tsv)
+subscription_id=$BACKEND_STORAGE_SUBSCRIPTION_ID
+tenant_id=$BACKEND_STORAGE_TENANT_ID
+deployment_subscription_id=$AZURE_SUBSCRIPTION_ID
 
-echo "=== Using Subscription: ${subscription_id} - Tenant: ${tenant_id} ==="
+echo "=== Deploying storage and user assigned identities to Subscription: ${subscription_id} - Tenant: ${tenant_id} ==="
 
 random_suffix() {
   openssl rand -hex 4 | tr -dc 'a-z0-9' | head -c 6
 }
+
+tfplan_sa_names=()
 
 for env in "${envs[@]}"; do
   echo "=== Setting up environment: ${env} ==="
@@ -89,12 +91,12 @@ for env in "${envs[@]}"; do
   identity_client_id=$(az_tsv identity show -n "$identity_name" -g "$resource_group" --query clientId -o tsv)
   echo "Identity principalId: ${identity_principal_id} clientId: ${identity_client_id}"
 
-  echo "Assigning Role Contributor on /subscriptions/${subscription_id}/resourceGroups/${resource_group} for ${identity_name}"
+  echo "Assigning Role Contributor on /subscriptions/${deployment_subscription_id} for ${identity_name}"
   az role assignment create -o none \
     --assignee-object-id $identity_principal_id \
     --assignee-principal-type ServicePrincipal \
     --role "Contributor" \
-    --scope "/subscriptions/${subscription_id}/resourceGroups/${resource_group}"
+    --scope "/subscriptions/${deployment_subscription_id}"
 
   echo "Assigning Role 'Storage Blob Data Contributor' on StorageAccount ${storage_name} for ${identity_name}"
   az role assignment create -o none \
@@ -117,4 +119,9 @@ for env in "${envs[@]}"; do
   echo ""
   echo "=== Done with environment: $env creation ==="
   echo
+
+  tfplan_sa_names+=("${storage_name}")
 done
+
+tfplan_sa_list="$(IFS=' '; echo "${tfplan_sa_names[*]}")"
+echo "TFPLAN_STORAGE_ACCOUNTS=\"$tfplan_sa_list\"" >> "$env_file"
