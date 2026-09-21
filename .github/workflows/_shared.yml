@@ -8,8 +8,10 @@ permissions:
 
 jobs:
   lint:
+    name: Lint
     uses: ./.github/workflows/lint.yml
 
   checks:
+    name: Checks
     needs: lint
     uses: ./.github/workflows/checks.yml

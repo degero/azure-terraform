@@ -6,6 +6,7 @@ on:
 
 jobs:
   docs:
+    name: Generate docs
     runs-on: ubuntu-latest
     permissions:
       contents: write

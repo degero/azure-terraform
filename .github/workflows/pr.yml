@@ -20,10 +20,12 @@ permissions:
 
 jobs:
   shared:
+    name: Shared
     uses: ./.github/workflows/_shared.yml
 
   plan:
     needs: shared
+    name: Terraform Plan
     permissions:
       id-token: write
       contents: read
@@ -36,6 +38,7 @@ jobs:
       environment: ${{ matrix.environment }}
   doco:
     needs: plan
+    name: Generate Docs
     permissions:
       contents: write
     uses: ./.github/workflows/doco.yml
@@ -43,6 +46,7 @@ jobs:
   # TODO comment out
   apply: # apply to lowest environment only
     needs: doco
+    name: Terraform Apply
     permissions:
       contents: read
       id-token: write

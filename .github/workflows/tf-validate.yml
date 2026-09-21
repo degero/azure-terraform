@@ -10,6 +10,7 @@ on:
 
 jobs:
   tf-validate:
+    name: Terraform Validate
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -25,3 +26,4 @@ jobs:
         with:
           working_directory: ${{ env.WORKING_DIR }}
           no_backend: "true"
+      - uses:

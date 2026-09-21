@@ -15,9 +15,11 @@ concurrency:
 # main.yml
 jobs:
   shared:
+    name: Shared
     uses: ./.github/workflows/_shared.yml
 
   plan:
+    name: Terraform Plan
     needs: shared
     permissions:
       id-token: write
@@ -32,6 +34,7 @@ jobs:
       environment: ${{ matrix.environment }}
   apply:
     needs: plan
+    name: Terraform Apply
     permissions:
       contents: read
       id-token: write

@@ -10,6 +10,7 @@ on:
 
 jobs:
   apply:
+    name: Terraform Apply
     runs-on: ubuntu-latest
     environment: ${{ inputs.environment }}
     permissions:

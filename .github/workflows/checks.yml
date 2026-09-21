@@ -20,6 +20,7 @@ jobs:
   #         sarif_file: results.sarif
   #         category: checkov
   validate:
+    name: Terraform Validate
     permissions:
       contents: read
     # needs: checkov
