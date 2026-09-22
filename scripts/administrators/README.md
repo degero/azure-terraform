@@ -10,6 +10,8 @@ To setup, copy `.env.example` to `.env`, fill in the values then run:
 1. setup-github-environments.sh
 1. setup-github-oidc-subject.sh
 
+Take the output from setup-azure-tfstate-store.sh and compose/update the /envionrments/env/backend.hcl files with the state storage details using the backend.hcl.example as guidance.
+
 ## setup-azure-tfstate-store.sh
 
 This creates resource groups, storage accounts (tfstate, tfplans containers) and plan/apply user managed identities for each .env item in ENVS array. Identities are granted subscription 'Contributor' and storage 'Storage Blob Data Contributor' roles.

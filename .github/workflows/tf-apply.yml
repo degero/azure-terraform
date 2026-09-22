@@ -15,7 +15,7 @@ jobs:
   apply:
     name: Terraform Apply
     runs-on: ubuntu-latest
-    environment: ${{ inputs.environment }}
+    environment: ${{ inputs.environment }}-apply
     permissions:
       id-token: write
       contents: read
