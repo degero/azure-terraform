@@ -30,7 +30,7 @@ jobs:
       contents: read
       pull-requests: write
       security-events: write
-    uses: ./.github/workflows/tf-plan.yml
+    uses: degero/azure-terraform/.github/workflows/tf-plan.yml@main
     strategy:
       matrix:
         environment: ${{ fromJSON(vars.TF_ENVIRONMENTS) }}
@@ -50,7 +50,7 @@ jobs:
     permissions:
       contents: read
       id-token: write
-    uses: ./.github/workflows/tf-apply.yml
+    uses: degero/azure-terraform/.github/workflows/tf-apply.yml@main
     with:
       environment: ${{ fromJSON(vars.TF_ENVIRONMENTS)[0] }}
       plan_blob_name: ${{ needs.plan.outputs.plan_blob_name }}
