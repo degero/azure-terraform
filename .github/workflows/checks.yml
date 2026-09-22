@@ -29,9 +29,7 @@ jobs:
           category: checkov
   validate:
     name: Terraform Validate
-    needs: checkov
     strategy:
-      max-parallel: 1 # run dev before test, and only if dev passes
       matrix:
         environment: ${{ fromJSON(vars.TF_ENVIRONMENTS) }}
     uses: ./.github/workflows/tf-validate.yml
