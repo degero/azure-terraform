@@ -128,7 +128,9 @@ The setup scripts create storage and a user-assigned identity for github access 
 Recommended for higher environments:
 
 - Set storage from public to private vnet
-- Isolated tfstate / tfplans to seperate subscription
+- Separate storage accounts for tfstate / tfplans
+- Place terraform UAMI, federated credentials, storage etc in a separate subscription to deployment environments
+- Isolate deployment envs to separate subscriptions
 
 You could adopt components of the /bootstrap of [azure-samples/github-terraform-oidc-ci-cd](https://github.com/azure-samples/github-terraform-oidc-ci-cd) to implement these note however tfstate is only seperated by container.
 
