@@ -28,8 +28,8 @@ module "rg" {
 module "storage" {
   source = "../../modules/storage"
 
-  name                = module.naming.storage.name
-  resource_group_name = module.rg.name
+  name                = module.naming.storage_account.name
+  resource_group_name = module.rg.resource_id
   location            = var.location
 
   tags = local.common_tags
