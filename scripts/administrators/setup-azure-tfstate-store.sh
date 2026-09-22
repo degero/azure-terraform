@@ -71,6 +71,7 @@ for env in "${envs[@]}"; do
     --name tfplans \
     --auth-mode login
 
+  # TF Plan container policy delete after 7 days
   cat > policy.json <<'EOF'
 {
   "rules": [
@@ -95,10 +96,9 @@ for env in "${envs[@]}"; do
 EOF
 
   az storage account management-policy create \
-    --account-name "$TF_PLAN_STORAGE_ACCOUNT" \
-    --resource-group "$RG" \
+    --account-name "$storage_name" \
+    --resource-group "$resource_group" \
     --policy @policy.json
-
 
   identity_name_apply="id-terraform-cicd-apply-$env"
   identity_name_plan="id-terraform-cicd-plan-$env"

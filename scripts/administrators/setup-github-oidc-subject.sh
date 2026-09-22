@@ -57,6 +57,13 @@ else
   read -ra repos <<< "$GITHUB_REPOS"
 fi
 
+keys=()
+if [ "$ADD_ENVIRONMENT_SUBJECT_CLAIM" = "true" ]; then
+  keys=("repository_owner_id" "repository_id" "environment" "job_workflow_ref")
+else
+  keys=("repository_owner_id" "repository_id" "job_workflow_ref")
+fi
+
 for repo in "${repos[@]}"; do
   if [[ ! "$repo" =~ ^[A-Za-z0-9._-]+/[A-Za-z0-9._-]+$ ]]; then
     echo "Error: '$repo' is not in owner/repo format — skipping" >&2
@@ -65,13 +72,19 @@ for repo in "${repos[@]}"; do
 
   echo "=== Setting OIDC subject claim template on $repo ==="
 
-  gh api --method PUT "repos/$repo/actions/oidc/customization/sub" \
-    --input - <<'EOF'
-{
-  "use_default": false,
-  "include_claim_keys": ["repository_owner_id", "repository_id", "environment", "job_workflow_ref"]
-}
-EOF
+  args=(--method PUT "repos/$repo/actions/oidc/customization/sub" -F use_default=false)
+  for k in "${keys[@]}"; do
+    args+=(-F "include_claim_keys[]=$k")
+  done
+  gh api "${args[@]}"
+
+#   gh api --method PUT "repos/$repo/actions/oidc/customization/sub" \
+#     --input - <<'EOF'
+# {
+#   "use_default": false,
+#   "include_claim_keys": ["repository_owner_id", "repository_id", "environment", "job_workflow_ref"]
+# }
+# EOF
 
   echo "  -> confirming:"
   gh api "repos/$repo/actions/oidc/customization/sub"

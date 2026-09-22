@@ -138,7 +138,7 @@ for i in "${!target_envs[@]}"; do
     # name:GH-environment  identity_name  client_id  workflow-file
     for stage in "apply" "plan"; do
       if [[ "$stage" == "apply" ]]; then
-        name="$env"
+        name="${env}-apply"
         identity_name="$apply_identity_name"
         client_id="$apply_client_id"
         workflow_file="tf-apply.yml"
@@ -150,11 +150,17 @@ for i in "${!target_envs[@]}"; do
       fi
 
       job_workflow_ref="${repo}/.github/workflows/${workflow_file}@refs/heads/main"
-      subject="repository_owner_id:${owner_id}:repository_id:${repo_id}:environment:${name}:job_workflow_ref:${job_workflow_ref}"
+
+      # this is an added layer of OIDC security, at the cost of Dependabot / Github Advanced security working
+      if [ "$ADD_ENVIRONMENT_SUBJECT_CLAIM" = "true" ]; then
+        subject="repository_owner_id:${owner_id}:repository_id:${repo_id}:environment:${name}:job_workflow_ref:${job_workflow_ref}"
+      else
+        subject="repository_owner_id:${owner_id}:repository_id:${repo_id}:job_workflow_ref:${job_workflow_ref}"
+      fi
 
       echo "  -> federated credential for '$name' (identity: $identity_name, workflow: $workflow_file)"
       az identity federated-credential create \
-        --name "fic-github-$repo_slug-$name" \
+        --name "fic-github-$repo_slug-$stage-$env" \
         --identity-name "$identity_name" \
         --resource-group "$resource_group" \
         --issuer "https://token.actions.githubusercontent.com" \
