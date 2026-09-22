@@ -59,8 +59,10 @@ use_oidc = true
 If you have appropriate access, assign yourself access to the dev tfstate storage:
 
 ```
+az ad signed-in-user show --query id -o tsv
+
 az role assignment create \
-  --assignee "$(az ad signed-in-user show --query id -o tsv)" \
+  --assignee your-id \
   --role "Storage Blob Data Contributor" \
   --scope "/subscriptions/<subscription-id>/resourceGroups/<resource-group>/providers/Microsoft.Storage/storageAccounts/<storage-account-name>/blobServices/default/containers/tfstate"
 ```
