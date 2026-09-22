@@ -32,6 +32,7 @@ jobs:
       security-events: write
     uses: degero/azure-terraform/.github/workflows/tf-plan.yml@main
     strategy:
+      max-parallel: 1
       matrix:
         environment: ${{ fromJSON(vars.TF_ENVIRONMENTS) }}
     with:
