@@ -10,9 +10,15 @@ To setup, copy `.env.example` to `.env`, fill in the values then run:
 1. setup-github-environments.sh
 1. setup-github-oidc-subject.sh
 
+Next Steps:
+
 Take the output from setup-azure-tfstate-store.sh and compose/update the /envionrments/env/backend.hcl files with the state storage details using the backend.hcl.example as guidance.
 
-If you wish to add other environments later, replace ENVS with new ones to create and run the above steps 1 and 2.
+Set Github environment conditions eg. prod-apply env Required reviewers
+
+Adding extra environments:
+
+If you wish to add other environments later, replace ENVS with new ones to create and run the above steps 1 and 2. Then follow the above Next steps.
 
 ## setup-azure-tfstate-store.sh
 
