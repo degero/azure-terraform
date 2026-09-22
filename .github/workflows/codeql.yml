@@ -8,6 +8,10 @@ on:
   schedule:
     - cron: "26 2 * * 5"
 
+permissions:
+  contents: read
+  security-events: write
+
 jobs:
   analyze:
     runs-on: ubuntu-latest
