@@ -11,9 +11,6 @@ on:
       plan_blob_name:
         value: ${{ jobs.plan.outputs.plan_blob_name }}
 
-env:
-  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
 jobs:
   plan:
     name: Terraform Plan
@@ -50,10 +47,9 @@ jobs:
         if: always() && github.event_name == 'pull_request' && (steps.plan.outcome == 'success' || steps.plan.outcome == 'failure')
         uses: actions/github-script@v9
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           TFPLAN_OUTPUT: "${{ format('{0}{1}', steps.plan.outputs.stdout, steps.plan.outputs.stderr) }}"
         with:
-          github-token: ${{ secrets.TFPLAN_OUTPUT }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
             const body = `${process.env.SUMMARY}`;
             github.rest.issues.createComment({
