@@ -38,5 +38,5 @@ resource "azurerm_storage_account" "this" {
   location                 = var.location
   account_tier             = var.account_tier
   account_replication_type = var.replication_type
-
+  tags                     = var.tags
 }
