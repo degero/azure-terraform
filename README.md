@@ -74,7 +74,6 @@ After cloning a repo:
 ```
 git config core.hooksPath .githooks
 
-
 cd environments/dev
 ../../scripts/tf-init.sh/ps1
 
@@ -85,10 +84,7 @@ terraform workspace new <issuenumber> (so workspace is unique)
 terraform plan -out="tfplan"
 terraform apply tfplan
 
-
 # before committing changes run in repo root:
-
-
 
 
 # after PR complete
