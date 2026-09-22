@@ -1,6 +1,6 @@
 # Administrator setup
 
-These script allow setup in Azure / Github for multiple environment terraform state and plan storage as well as user managed identities that GitHub can use to access storage and deploy terraform. You can adjust which environments to setup and add more/re-run later. There are 2 github environments per target environment allowing separate control over terraform plan and apply.
+These script allow setup in Azure / Github for multiple environment terraform state and plan storage as well as user managed identities that GitHub can use to access storage and deploy terraform. There are 2 github environments per target environment allowing separate control over terraform plan and apply.
 
 See the notes on the [setup-github-environments.sh](#setup-github-environmentssh) before running the next steps.
 
@@ -11,6 +11,8 @@ To setup, copy `.env.example` to `.env`, fill in the values then run:
 1. setup-github-oidc-subject.sh
 
 Take the output from setup-azure-tfstate-store.sh and compose/update the /envionrments/env/backend.hcl files with the state storage details using the backend.hcl.example as guidance.
+
+If you wish to add other environments later, replace ENVS with new ones to create and run the above steps 1 and 2.
 
 ## setup-azure-tfstate-store.sh
 
