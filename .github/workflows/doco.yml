@@ -10,53 +10,18 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: write
+    env:
+      TERRAFORM_DOCS_VERSION: "0.20.0"
     steps:
       - uses: actions/checkout@v7
         with:
           ref: ${{ github.event.pull_request.head.ref }}
 
-      - name: Docs — environments
-        uses: terraform-docs/gh-actions@6de6da0cefcc6b4b7a5cbea4d79d97060733093c #v1.4.1
-        with:
-          find-dir: environments
-          output-file: docs/README.md
-          output-method: inject
-          git-push: "false"
+      - name: Install terraform-docs
+        run: bash scripts/actions/install-terraform-docs.sh
 
-      - name: Check for modulegroups directory
-        id: check_modulegroups
-        run: |
-          if [ -d "modulegroups" ]; then
-            echo "exists=true" >> "$GITHUB_OUTPUT"
-          else
-            echo "exists=false" >> "$GITHUB_OUTPUT"
-          fi
-
-      - name: Docs — module groups
-        if: steps.check_modulegroups.outputs.exists == 'true'
-        uses: terraform-docs/gh-actions@6de6da0cefcc6b4b7a5cbea4d79d97060733093c #v1.4.1
-        with:
-          find-dir: modulegroups
-          output-file: docs/README.md
-          output-method: inject
-          git-push: "false"
-
-      - name: Docs — shared modules
-        uses: terraform-docs/gh-actions@6de6da0cefcc6b4b7a5cbea4d79d97060733093c #v1.4.1
-        with:
-          find-dir: modules
-          output-file: docs/README.md
-          output-method: inject
-          git-push: "false"
+      - name: Generate consolidated docs/README.md
+        run: bash scripts/actions/generate-docs.sh
 
       - name: Commit and push docs changes
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          if [ -n "$(git status --porcelain)" ]; then
-            git add -A
-            git commit -m "terraform-docs: automated docs update"
-            git push
-          else
-            echo "No doc changes to commit."
-          fi
+        run: bash scripts/actions/commit-docs.sh
