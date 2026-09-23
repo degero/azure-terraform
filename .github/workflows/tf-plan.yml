@@ -31,33 +31,105 @@ jobs:
       WORKING_DIR: ./environments/${{ inputs.environment }}
       TFPLAN_STORAGE_ACCOUNT: ${{ vars.TF_PLAN_STORAGE_ACCOUNT }}
       TF_INPUT: 0
+
     steps:
       - uses: actions/checkout@v7
+
       - uses: ./.github/actions/tf-init
         with:
           working_directory: ${{ env.WORKING_DIR }}
+
       - name: Terraform plan blob name
         id: plan_path
         run: echo "plan_blob_name=${{ github.repository }}/${{ inputs.environment }}/${{ github.run_id }}-${{ github.run_attempt }}/tfplan" >> "$GITHUB_OUTPUT"
+
       - name: Terraform Plan
         id: plan
         working-directory: ${{ env.WORKING_DIR }}
         run: terraform plan -var-file=terraform.tfvars -out=tfplan
-      - name: Terraform Output to PR
+
+      - name: Convert plan to JSON
+        working-directory: ${{ env.WORKING_DIR }}
+        run: terraform show -json tfplan > tfplan.json
+
+      # Build a short, non-sensitive summary: resource address + action only.
+      # Never touches attribute values, so tags/IPs/keys etc. never leak into the PR.
+      - name: Build plan summary
+        id: plan_summary
+        working-directory: ${{ env.WORKING_DIR }}
+        run: |
+          jq -r '
+            def sym(a):
+              if a == ["create"] then "🟢 add"
+              elif a == ["update"] then "🟡 change"
+              elif a == ["delete"] then "🔴 destroy"
+              elif (a == ["create","delete"]) or (a == ["delete","create"]) then "♻️ replace"
+              else "• " + (a | join(",")) end;
+
+            [.resource_changes[] | select(.change.actions != ["no-op"])] as $changes
+            | ($changes | map(select(.change.actions == ["create"])) | length) as $add
+            | ($changes | map(select(.change.actions == ["update"])) | length) as $change
+            | ($changes | map(select(.change.actions == ["delete"])) | length) as $destroy
+            | ($changes | map(select((.change.actions == ["create","delete"]) or (.change.actions == ["delete","create"]))) | length) as $replace
+            | "**Plan summary:** \($add) to add, \($change) to change, \($destroy) to destroy" +
+              (if $replace > 0 then ", \($replace) to replace" else "" end),
+              "",
+              (if ($changes | length) == 0 then "_No resource changes._"
+               else ($changes[] | "- \(sym(.change.actions)) `\(.address)`") end)
+          ' tfplan.json > plan_summary.md
+
+      - name: Upsert Terraform plan comment on PR
         if: always() && github.event_name == 'pull_request' && (steps.plan.outcome == 'success' || steps.plan.outcome == 'failure')
         uses: actions/github-script@v9
         env:
-          TFPLAN_OUTPUT: "${{ format('{0}{1}', steps.plan.outputs.stdout, steps.plan.outputs.stderr) }}"
+          PLAN_OUTCOME: ${{ steps.plan.outcome }}
+          # Only used as a fallback when the plan itself failed (no tfplan.json to summarize).
+          TFPLAN_RAW: "${{ format('{0}{1}', steps.plan.outputs.stdout, steps.plan.outputs.stderr) }}"
+          WORKING_DIR: ${{ env.WORKING_DIR }}
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
-            const body = `${process.env.TFPLAN_OUTPUT}`;
-            github.rest.issues.createComment({
-                issue_number: context.issue.number,
+            const fs = require('fs');
+            const path = require('path');
+
+            const marker = `<!-- terraform-plan-comment: ${{ inputs.environment }} -->`;
+            let body;
+
+            if (process.env.PLAN_OUTCOME === 'success') {
+              const summaryPath = path.join(process.env.WORKING_DIR, 'plan_summary.md');
+              const summary = fs.readFileSync(summaryPath, 'utf8');
+              body = `${marker}\n## Terraform Plan — \`${{ inputs.environment }}\`\n\n${summary}\n\n<sub>Run: [${context.runId}](${context.payload.repository.html_url}/actions/runs/${context.runId})</sub>`;
+            } else {
+              // Plan failed: no JSON to summarize, so surface a short error tail only (no full raw dump).
+              const raw = process.env.TFPLAN_RAW || '';
+              const tail = raw.split('\n').slice(-40).join('\n');
+              body = `${marker}\n## ❌ Terraform Plan failed — \`${{ inputs.environment }}\`\n\n\`\`\`\n${tail}\n\`\`\`\n\n<sub>Run: [${context.runId}](${context.payload.repository.html_url}/actions/runs/${context.runId})</sub>`;
+            }
+
+            const { data: comments } = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+            });
+
+            const existing = comments.find(c => c.body && c.body.includes(marker));
+
+            if (existing) {
+              await github.rest.issues.updateComment({
                 owner: context.repo.owner,
                 repo: context.repo.repo,
-                body: body
-            })
+                comment_id: existing.id,
+                body,
+              });
+            } else {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+                body,
+              });
+            }
+
       # TODO remove
       # - name: Post Plan
       #   if: always() && github.event_name == 'pull_request' && (steps.plan.outcome == 'success' || steps.plan.outcome == 'failure')
@@ -66,15 +138,13 @@ jobs:
       #     commenter_type: plan
       #     commenter_input: ${{ format('{0}{1}', steps.plan.outputs.stdout, steps.plan.outputs.stderr) }}
       #     commenter_exitcode: ${{ steps.plan.outputs.exitcode }}
-      - name: Convert plan to JSON
-        working-directory: ${{ env.WORKING_DIR }}
-        run: terraform show -json tfplan > tfplan.json
       - name: Azure login
         uses: azure/login@a641126d1b8aa4d1fa005f4f92df94a3a4c4c906 #v3.1.0
         with:
           client-id: ${{ vars.AZURE_CLIENT_ID }}
           tenant-id: ${{ vars.AZURE_TENANT_ID }}
           subscription-id: ${{ vars.AZURE_SUBSCRIPTION_ID }}
+
       - name: Upload plan to blob storage
         working-directory: ${{ env.WORKING_DIR }}
         run: |
@@ -85,6 +155,7 @@ jobs:
             --name "${{ steps.plan_path.outputs.plan_blob_name }}" \
             --file tfplan \
             --overwrite
+
       - name: Checkov Terraform (tfplan)
         uses: bridgecrewio/checkov-action@master
         with:
@@ -93,6 +164,7 @@ jobs:
           soft_fail: false
           output_format: cli,sarif
           output_file_path: console,results.sarif
+
       - uses: github/codeql-action/upload-sarif@v4
         with:
           sarif_file: results.sarif
