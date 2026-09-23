@@ -47,4 +47,18 @@ else
   echo "checkov not found locally — skipping (will still run in CI)"
 fi
 
+echo "==> Powershell script lint (Invoke-ScriptAnalyzer)"
+if command -v pwsh >/dev/null 2>&1 && pwsh -NoProfile -Command "Get-Module -ListAvailable -Name PSScriptAnalyzer" | grep -q PSScriptAnalyzer; then
+  pwsh -c "Invoke-ScriptAnalyzer -Path . -Recurse -EnableExit"
+else
+  echo "Powershell script lint (Invoke-ScriptAnalyzer) not found locally — skipping (will still run in CI)"
+fi
+
+echo "==> Shell script lint (shellcheck)"
+if command -v shellcheck >/dev/null 2>&1; then
+  shellcheck -S warning $(find . -type f -name "*.sh" -not -path "*/.terraform/*")
+else
+  echo "Shell script lint (shellcheck) not found locally — skipping (will still run in CI)"
+fi
+
 echo "==> All checks passed"

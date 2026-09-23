@@ -51,4 +51,12 @@ else {
     Write-Information "checkov not found locally — skipping (will still run in CI)" -InformationAction Continue
 }
 
+Write-Information "==> Powershell script lint" -InformationAction Continue
+if (Get-Command Invoke-ScriptAnalyzer -ErrorAction SilentlyContinue) {
+    Invoke-ScriptAnalyzer -Path . -Recurse -Severity Warning  -EnableExit
+}
+else {
+    Write-Information "Powershell script lint (Invoke-ScriptAnalyzer) not found locally — skipping (will still run in CI)" -InformationAction Continue
+}
+
 Write-Information "==> All checks passed" -InformationAction Continue
