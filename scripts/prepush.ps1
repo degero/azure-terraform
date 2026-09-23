@@ -4,28 +4,30 @@ $ErrorActionPreference = "Stop"
 $RepoRoot = git rev-parse --show-toplevel
 Set-Location $RepoRoot
 
-Write-Host "==> Prettier check (json, jsonc, yaml, yml, md)"
+Write-Information "==> Prettier check (json, jsonc, yaml, yml, md)" -InformationAction Continue
 npx prettier --write "**/*.{json,jsonc,yaml,yml,md}"
 
-Write-Host "==> Terraform fmt check"
+Write-Information "==> Terraform fmt check" -InformationAction Continue
 terraform fmt -recursive -check
 
-Write-Host "==> Terraform validate"
+Write-Information "==> Terraform validate" -InformationAction Continue
 $failed = $false
-Get-ChildItem -Path "environments" -Directory | ForEach-Object {
-    $envPath = $_.FullName
-    $envName = $_.Name
+$envDirs = Get-ChildItem -Path "environments" -Directory
+
+foreach ($dir in $envDirs) {
+    $envPath = $dir.FullName
+    $envName = $dir.Name
 
     terraform -chdir="$envPath" init -backend=false -input=false | Out-Null
     if ($LASTEXITCODE -ne 0) {
-        Write-Host "✗ Init failed in $envName"
+        Write-Information "✗ Init failed in $envName" -InformationAction Continue
         $failed = $true
-        return
+        continue
     }
 
     terraform -chdir="$envPath" validate
     if ($LASTEXITCODE -ne 0) {
-        Write-Host "✗ Validation failed in $envName"
+        Write-Information "✗ Validation failed in $envName" -InformationAction Continue
         $failed = $true
     }
 }
@@ -34,19 +36,19 @@ if ($failed) {
     exit 1
 }
 
-Write-Host "==> tflint (modules)"
+Write-Information "==> tflint (modules)" -InformationAction Continue
 tflint -f compact --recursive --chdir=modules      --config="$RepoRoot/.tflint.modules.hcl"
 tflint -f compact --recursive --chdir=modulegroups --config="$RepoRoot/.tflint.modules.hcl"
 
-Write-Host "==> tflint (environments)"
+Write-Information "==> tflint (environments)" -InformationAction Continue
 tflint -f compact --recursive --chdir=environments
 
-Write-Host "==> Checkov"
+Write-Information "==> Checkov" -InformationAction Continue
 if (Get-Command checkov -ErrorAction SilentlyContinue) {
     checkov -d . --config-file "$RepoRoot/.checkov.yaml"
 }
 else {
-    Write-Host "checkov not found locally — skipping (will still run in CI)"
+    Write-Information "checkov not found locally — skipping (will still run in CI)" -InformationAction Continue
 }
 
-Write-Host "==> All checks passed"
+Write-Information "==> All checks passed" -InformationAction Continue

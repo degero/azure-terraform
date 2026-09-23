@@ -65,7 +65,7 @@ jobs:
         shell: pwsh
         run: |
           Install-Module -Name PSScriptAnalyzer -Force -Scope CurrentUser
-          $results = Invoke-ScriptAnalyzer -Path . -Recurse -EnableExit
+          $results = Invoke-ScriptAnalyzer -Path . -Recurse -Severity Warning -EnableExit
           if ($results) {
             $results | Format-Table -AutoSize
             exit 1

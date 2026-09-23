@@ -159,6 +159,15 @@ environments/
 aztfexport
 https://learn.microsoft.com/en-us/azure/developer/terraform/azure-export-for-terraform/export-terraform-overview
 
+### Linting and Formatters
+
+If changing .sh/.ps1 scripts run:
+
+```
+shellcheck -S warning $(find . -type f -name "*.sh" -not -path "*/.terraform/*")
+Invoke-ScriptAnalyzer -Path . -Recurse -Severity Warning
+```
+
 ## Troubleshooting
 
 ### Local dev
