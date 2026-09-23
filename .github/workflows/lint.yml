@@ -57,6 +57,7 @@ jobs:
     name: LintScripts
     runs-on: ubuntu-latest
     steps:
+      - uses: actions/checkout@v7
       - name: Lint shell scripts (shellcheck)
         run: shellcheck $(find . -type f -name "*.sh" -not -path "*/.terraform/*")
         # shellcheck is preinstalled on ubuntu-latest runners, no setup needed
