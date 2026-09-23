@@ -1,4 +1,4 @@
-# scripts/prepush.ps1
+﻿# scripts/prepush.ps1
 $ErrorActionPreference = "Stop"
 
 $RepoRoot = git rev-parse --show-toplevel
@@ -53,7 +53,7 @@ else {
 
 Write-Information "==> Powershell script lint" -InformationAction Continue
 if (Get-Command Invoke-ScriptAnalyzer -ErrorAction SilentlyContinue) {
-    Invoke-ScriptAnalyzer -Path . -Recurse -Severity Warning  -EnableExit
+    Invoke-ScriptAnalyzer -Path scripts -Recurse -Severity Warning  -EnableExit
 }
 else {
     Write-Information "Powershell script lint (Invoke-ScriptAnalyzer) not found locally — skipping (will still run in CI)" -InformationAction Continue

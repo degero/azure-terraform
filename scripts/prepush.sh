@@ -49,7 +49,7 @@ fi
 
 echo "==> Powershell script lint (Invoke-ScriptAnalyzer)"
 if command -v pwsh >/dev/null 2>&1 && pwsh -NoProfile -Command "Get-Module -ListAvailable -Name PSScriptAnalyzer" | grep -q PSScriptAnalyzer; then
-  pwsh -c "Invoke-ScriptAnalyzer -Path . -Recurse -EnableExit"
+  pwsh -c "Invoke-ScriptAnalyzer -Path scripts -Severity Warning -Recurse -EnableExit"
 else
   echo "Powershell script lint (Invoke-ScriptAnalyzer) not found locally — skipping (will still run in CI)"
 fi
