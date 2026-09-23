@@ -6,22 +6,44 @@ on:
 
 jobs:
   docs:
-    name: Generate docs
+  name: Generate docs
     runs-on: ubuntu-latest
     permissions:
       contents: write
-    env:
-      TERRAFORM_DOCS_VERSION: "0.20.0"
-    steps:
-      - uses: actions/checkout@v7
-        with:
-          ref: ${{ github.event.pull_request.head.ref }}
+  strategy:
+    matrix:
+      root: [environments, modules, modulegroups]
+  runs-on: ubuntu-latest
+  steps:
+    - uses: actions/checkout@v7
+      with:
+        ref: ${{ github.event.pull_request.head.ref }}
+    - name: Generate docs
+      uses: terraform-docs/gh-actions@v1
+      with:
+        working-dir: ${{ matrix.root }}/
+        recursive: true
+        output-file: README.md
+        output-method: inject
+        git-push: true
 
-      - name: Install terraform-docs
-        run: bash scripts/actions/install-terraform-docs.sh
+  # docs:
+  #   name: Generate docs
+  #   runs-on: ubuntu-latest
+  #   permissions:
+  #     contents: write
+  #   env:
+  #     TERRAFORM_DOCS_VERSION: "0.20.0"
+  #   steps:
+  #     - uses: actions/checkout@v7
+  #       with:
+  #         ref: ${{ github.event.pull_request.head.ref }}
+    # - name: Install terraform-docs
+    #   run: bash scripts/actions/install-terraform-docs.sh
 
-      - name: Generate consolidated docs/README.md
-        run: bash scripts/actions/generate-docs.sh
+    # - name: Generate consolidated docs/README.md
+    #   run: bash scripts/actions/generate-docs.sh
 
-      - name: Commit and push docs changes
-        run: bash scripts/actions/commit-docs.sh
+    # - name: Commit and push docs changes
+    #   run: bash scripts/actions/commit-docs.sh
+
