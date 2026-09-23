@@ -78,66 +78,49 @@ jobs:
                else ($changes[] | "- \(sym(.change.actions)) `\(.address)`") end)
           ' tfplan.json > plan_summary.md
 
-      - name: Upsert Terraform plan comment on PR
-        if: always() && github.event_name == 'pull_request' && (steps.plan.outcome == 'success' || steps.plan.outcome == 'failure')
+      - name: PR comment (marocchino)
+        if: ${{ vars.USE_ALTERNATE_PR_COMMENT }} == 'true' && always() && github.event_name == 'pull_request' && steps.plan.outcome == 'success'
+        uses: marocchino/sticky-pull-request-comment@v2
+        with:
+          header: "terraform-plan-marocchino-${{ inputs.environment }}"
+          path: ${{ env.WORKING_DIR }}/plan_summary.md
+
+      - name: PR comment (borchero)
+        if: ${{ vars.USE_ALTERNATE_PR_COMMENT }} == 'false' && always() && github.event_name == 'pull_request' && steps.plan.outcome == 'success'
+        uses: borchero/terraform-plan-comment@v2
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          planfile: tfplan
+          working-directory: ${{ env.WORKING_DIR }}
+          header: "🧪 Terraform Plan (borchero) — ${{ inputs.environment }}"
+
+      # Neither action above has anything to parse when `terraform plan` fails
+      - name: PR comment on plan failure
+        if: always() && github.event_name == 'pull_request' && steps.plan.outcome == 'failure'
         uses: actions/github-script@v9
         env:
-          PLAN_OUTCOME: ${{ steps.plan.outcome }}
-          # Only used as a fallback when the plan itself failed (no tfplan.json to summarize).
           TFPLAN_RAW: "${{ format('{0}{1}', steps.plan.outputs.stdout, steps.plan.outputs.stderr) }}"
-          WORKING_DIR: ${{ env.WORKING_DIR }}
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
-            const fs = require('fs');
-            const path = require('path');
-
             const marker = `<!-- terraform-plan-comment: ${{ inputs.environment }} -->`;
-            let body;
-
-            if (process.env.PLAN_OUTCOME === 'success') {
-              const summaryPath = path.join(process.env.WORKING_DIR, 'plan_summary.md');
-              const summary = fs.readFileSync(summaryPath, 'utf8');
-              body = `${marker}\n## Terraform Plan — \`${{ inputs.environment }}\`\n\n${summary}\n\n<sub>Run: [${context.runId}](${context.payload.repository.html_url}/actions/runs/${context.runId})</sub>`;
-            } else {
-              // Plan failed: no JSON to summarize, so surface a short error tail only (no full raw dump).
-              const raw = process.env.TFPLAN_RAW || '';
-              const tail = raw.split('\n').slice(-40).join('\n');
-              body = `${marker}\n## ❌ Terraform Plan failed — \`${{ inputs.environment }}\`\n\n\`\`\`\n${tail}\n\`\`\`\n\n<sub>Run: [${context.runId}](${context.payload.repository.html_url}/actions/runs/${context.runId})</sub>`;
-            }
+            const raw = process.env.TFPLAN_RAW || '';
+            const tail = raw.split('\n').slice(-40).join('\n');
+            const body = `${marker}\n## ❌ Terraform Plan failed — \`${{ inputs.environment }}\`\n\n\`\`\`\n${tail}\n\`\`\`\n\n<sub>Run: [${context.runId}](${context.payload.repository.html_url}/actions/runs/${context.runId})</sub>`;
 
             const { data: comments } = await github.rest.issues.listComments({
               owner: context.repo.owner,
               repo: context.repo.repo,
               issue_number: context.issue.number,
             });
-
             const existing = comments.find(c => c.body && c.body.includes(marker));
 
             if (existing) {
-              await github.rest.issues.updateComment({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                comment_id: existing.id,
-                body,
-              });
+              await github.rest.issues.updateComment({ owner: context.repo.owner, repo: context.repo.repo, comment_id: existing.id, body });
             } else {
-              await github.rest.issues.createComment({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                issue_number: context.issue.number,
-                body,
-              });
+              await github.rest.issues.createComment({ owner: context.repo.owner, repo: context.repo.repo, issue_number: context.issue.number, body });
             }
 
-      # TODO remove
-      # - name: Post Plan
-      #   if: always() && github.event_name == 'pull_request' && (steps.plan.outcome == 'success' || steps.plan.outcome == 'failure')
-      #   uses: robburger/terraform-pr-commenter@72c6e45eced6641488a6cf3ff104b7b9bda9c66c #v1.5.0
-      #   with:
-      #     commenter_type: plan
-      #     commenter_input: ${{ format('{0}{1}', steps.plan.outputs.stdout, steps.plan.outputs.stderr) }}
-      #     commenter_exitcode: ${{ steps.plan.outputs.exitcode }}
       - name: Azure login
         uses: azure/login@a641126d1b8aa4d1fa005f4f92df94a3a4c4c906 #v3.1.0
         with:
