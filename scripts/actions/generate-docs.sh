@@ -3,7 +3,7 @@ set -euo pipefail
 
 mkdir -p docs
 
-render_section () {
+render_section() {
   local heading="$1" base="$2"
   [ -d "$base" ] || return 0
 
@@ -20,7 +20,7 @@ render_section () {
     echo
     terraform-docs markdown table "$dir"
     echo
-  done <<< "$dirs"
+  done <<<"$dirs"
 }
 
 {
@@ -31,4 +31,4 @@ render_section () {
   render_section "Environments" "environments"
   render_section "Module groups" "modulegroups"
   render_section "Modules" "modules"
-} > docs/README.md
+} >docs/README.md

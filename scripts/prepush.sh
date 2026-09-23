@@ -14,7 +14,8 @@ echo "==> Terraform fmt check"
 terraform fmt -recursive -check
 
 echo "==> Terraform validate"
-for env_path in "environments/"; do
+failed=0
+for env_path in environments/*/; do
   env_name=$(basename "$env_path")
   if ! terraform -chdir="$env_path" init -backend=false -input=false > /dev/null; then
     echo "✗ Init failed in $env_name"
@@ -27,6 +28,10 @@ for env_path in "environments/"; do
     failed=1
   fi
 done
+
+if [[ "$failed" -eq 1 ]]; then
+  exit 1
+fi
 
 echo "==> tflint (modules)"
 tflint -f compact --recursive --chdir=modules      --config="$REPO_ROOT/.tflint.modules.hcl"
