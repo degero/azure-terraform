@@ -44,3 +44,17 @@ jobs:
           tflint -f compact --recursive --chdir=modules --config="${{ github.workspace }}/.tflint.modules.hcl"
           tflint -f compact --recursive --chdir=modulegroups --config="${{ github.workspace }}/.tflint.modules.hcl"
           tflint -f compact --recursive --chdir=environments
+
+      - name: Lint shell scripts (shellcheck)
+        run: shellcheck $(find . -type f -name "*.sh" -not -path "*/.terraform/*")
+        # shellcheck is preinstalled on ubuntu-latest runners, no setup needed
+
+      - name: Lint PowerShell scripts (PSScriptAnalyzer)
+        shell: pwsh
+        run: |
+          Install-Module -Name PSScriptAnalyzer -Force -Scope CurrentUser
+          $results = Invoke-ScriptAnalyzer -Path . -Recurse -EnableExit
+          if ($results) {
+            $results | Format-Table -AutoSize
+            exit 1
+          }

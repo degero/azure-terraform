@@ -9,6 +9,7 @@
     "source.fixAll": "explicit"
   },
   "yaml.format.enable": false,
+  "powershell.codeFormatting.addWhitespaceAroundPipe": true,
   "[json]": {
     "editor.defaultFormatter": "esbenp.prettier-vscode"
   },
@@ -36,6 +37,10 @@
   },
   "[terraform-vars]": {
     "editor.defaultFormatter": "hashicorp.terraform",
+    "editor.formatOnSave": true
+  },
+  "[powershell]": {
+    "editor.defaultFormatter": "ms-vscode.powershell",
     "editor.formatOnSave": true
   }
 }
