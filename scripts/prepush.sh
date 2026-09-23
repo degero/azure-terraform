@@ -56,7 +56,7 @@ fi
 
 echo "==> Shell script lint (shellcheck)"
 if command -v shellcheck >/dev/null 2>&1; then
-  shellcheck -S warning $(find . -type f -name "*.sh" -not -path "*/.terraform/*")
+  shellcheck -S warning "$(find . -type f -name "*.sh" -not -path "*/.terraform/*")"
 else
   echo "Shell script lint (shellcheck) not found locally — skipping (will still run in CI)"
 fi
