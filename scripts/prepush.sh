@@ -6,6 +6,10 @@ set -euo pipefail
 REPO_ROOT="$(git rev-parse --show-toplevel)"
 cd "$REPO_ROOT"
 
+
+echo "==> Prettier check (json, jsonc, yaml, yml, md)"
+npx prettier --write "**/*.{json,jsonc,yaml,yml,md}"
+
 echo "==> Terraform fmt check"
 terraform fmt -recursive -check
 

@@ -130,31 +130,29 @@ Recommended for higher environments:
 - Place terraform UAMI, federated credentials, storage etc in a separate subscription to deployment environments
 - Isolate deployment envs to separate subscriptions
 
-You could adopt components of the /bootstrap of [azure-samples/github-terraform-oidc-ci-cd](https://github.com/azure-samples/github-terraform-oidc-ci-cd) to implement these note however tfstate is only seperated by container.
+You could adopt components of the /bootstrap of [azure-samples/github-terraform-oidc-ci-cd](https://github.com/azure-samples/github-terraform-oidc-ci-cd) to implement these note however tfstate is only separated by container.
 
 modules/ ← atomic modules only (one resource type each)
 ├── compute/
-│ ├── functionapp/
-│ └── vm/
+│ ├── functionapp/functionapp.tf
+│ └── vm/vm.tf
 ├── storage/
-│ └── account/
+│ └── account/storageaccount.tf
 ├── networking/
-│ ├── vnet/
-│ └── subnet/
-└── security/
-└── keyvault/
+│ ├── vnet/vnet.tf
+│ └── subnet/subnet.tf
+├── secrets/
+│ └── keyvault/storageaccount.tf
 
 compositions/ ← composite modules (patterns of primitives)
-├── function-app/
-├── function-app.tf # calls modules/compute/functionapp + modules/storage/account
-├── variables.tf
-└── outputs.tf
+├── function-app-order-process/
+└─── function-app-order-process.tf # calls modules/compute/functionapp + modules/storage/account
 
 environments/
 ├── dev/
-├── terraform.tfvars
-├── backend.hcl
-└── main.tf # calls compositions/function-app, modules/networking, etc.
+│ ├── terraform.tfvars
+│ ├── backend.hcl
+│ └── main.tf # root module for ENV calls modules/, and compositions/ etc.
 
 ### Azure tooling
 
@@ -176,7 +174,7 @@ chmod +x ./scripts/prepush.sh
 
 #### Environments
 
-For each target environment workflows expect two Github Environments: env and env-plan. This is done to allow env based var/secret acesss and independent approval gating.
+For each target environment workflows expect two Github Environments: env and env-plan. This is done to allow env based var/secret access and independent approval gating.
 
 #### Release please
 
@@ -186,10 +184,10 @@ Change in github: Settings->General->Pull Requests->Default Commit Message as PR
 
 ### Overview of env
 
-$env-plan   — no protection rules, deployment branches: "No restriction"
+$env-plan — no protection rules, deployment branches: "No restriction"
 $env — protection rules as appropriate (none for dev/test, required reviewers for staging/preprod)
 
-$env-plan SP  →  subject: repo:$repo:environment:$env-plan
+$env-plan SP → subject: repo:$repo:environment:$env-plan
 $env SP → subject: repo:$repo:environment:$env
 
 ## Links

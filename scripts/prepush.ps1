@@ -4,6 +4,9 @@ $ErrorActionPreference = "Stop"
 $RepoRoot = git rev-parse --show-toplevel
 Set-Location $RepoRoot
 
+Write-Host "==> Prettier check (json, jsonc, yaml, yml, md)"
+npx prettier --write "**/*.{json,jsonc,yaml,yml,md}"
+
 Write-Host "==> Terraform fmt check"
 terraform fmt -recursive -check
 
