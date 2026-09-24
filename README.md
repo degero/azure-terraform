@@ -144,7 +144,7 @@ modules/ ← atomic modules only (one resource type each)
 ├── secrets/
 │ └── keyvault/storageaccount.tf
 
-compositions/ ← composite modules (patterns of primitives)
+modulegroups/ ← composite modules (patterns of primitives)
 ├── function-app-order-process/
 └─── function-app-order-process.tf # calls modules/compute/functionapp + modules/storage/account
 
