@@ -80,7 +80,7 @@ jobs:
 
       - name: PR comment (marocchino)
         if: ${{ vars.USE_ALTERNATE_PR_COMMENT }} == 'true' && always() && github.event_name == 'pull_request' && steps.plan.outcome == 'success'
-        uses: marocchino/sticky-pull-request-comment@v2
+        uses: marocchino/sticky-pull-request-comment@v3
         with:
           header: "terraform-plan-marocchino-${{ inputs.environment }}"
           path: ${{ env.WORKING_DIR }}/plan_summary.md
