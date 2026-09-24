@@ -21,16 +21,16 @@ permissions:
   pull-requests: write
 
 jobs:
-  shared:
-    name: Shared
-    permissions:
-      contents: read
-      actions: read # for private repo
-      security-events: write
-    uses: ./.github/workflows/_shared.yml
+  # shared:
+  #   name: Shared
+  #   permissions:
+  #     contents: read
+  #     actions: read # for private repo
+  #     security-events: write
+  #   uses: ./.github/workflows/_shared.yml
 
   plan:
-    needs: shared
+    # needs: shared
     name: Terraform Plan
     permissions:
       id-token: write
@@ -52,13 +52,13 @@ jobs:
     uses: ./.github/workflows/doco.yml
   # If you want to apply to dev on PRs
   # TODO comment out
-  apply: # apply to lowest environment only
-    needs: [plan, doco]
-    name: Terraform Apply
-    permissions:
-      contents: read
-      id-token: write
-    uses: degero/azure-terraform/.github/workflows/tf-apply.yml@main
-    with:
-      environment: ${{ fromJSON(vars.TF_ENVIRONMENTS)[0] }}
-      plan_blob_name: ${{ needs.plan.outputs.plan_blob_name }}
+  # apply: # apply to lowest environment only
+  #   needs: [plan, doco]
+  #   name: Terraform Apply
+  #   permissions:
+  #     contents: read
+  #     id-token: write
+  #   uses: degero/azure-terraform/.github/workflows/tf-apply.yml@main
+  #   with:
+  #     environment: ${{ fromJSON(vars.TF_ENVIRONMENTS)[0] }}
+  #     plan_blob_name: ${{ needs.plan.outputs.plan_blob_name }}
