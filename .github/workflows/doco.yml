@@ -24,7 +24,10 @@ jobs:
           output-method: inject
           git-push: false
       - name: Format generated documentation
-        run: npx prettier --write "environments/**/README.md" "modules/**/README.md" "modulegroups/**/README.md"
+        shell: bash
+        run: |
+          find environments modules modulegroups -name README.md -exec chmod u+rw {} +
+          npx prettier --write "environments/**/README.md" "modules/**/README.md" "modulegroups/**/README.md"
       - name: Commit and push generated documentation
         shell: bash
         run: |
