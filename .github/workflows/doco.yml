@@ -21,24 +21,35 @@ jobs:
       - name: Generate docs
         shell: bash
         run: |
-          terraform-docs markdown table \
-            --indent 2 \
-            --output-mode inject \
-            --output-file README.md \
-            --output-template $'<!-- BEGIN_TF_DOCS -->\n{{ .Content }}\n<!-- END_TF_DOCS -->' \
-            --recursive \
-            --recursive-path . \
-            .
+          template=$'<!-- BEGIN_TF_DOCS -->\n{{ .Content }}\n<!-- END_TF_DOCS -->'
+          for root in environments modules modulegroups; do
+            mkdir -p "docs/$root"
+            while IFS= read -r directory; do
+              if [[ "$directory" == "$root" ]]; then
+                relative_directory=""
+              else
+                relative_directory="${directory#"$root"/}"
+              fi
+              output_directory="docs/$root/$relative_directory"
+              mkdir -p "$output_directory"
+              terraform-docs markdown table \
+                --indent 2 \
+                --output-mode inject \
+                --output-file "$output_directory/README.md" \
+                --output-template "$template" \
+                "$directory"
+            done < <(find "$root" -type f -name '*.tf' -not -path '*/.terraform/*' -exec dirname {} \; | sort -u)
+          done
       - name: Format generated documentation
         shell: bash
         run: |
-          npx prettier --write "environments/**/README.md" "modules/**/README.md" "modulegroups/**/README.md"
+          npx prettier --write "docs/environments/**/README.md" "docs/modules/**/README.md" "docs/modulegroups/**/README.md"
       - name: Commit and push generated documentation
         shell: bash
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add environments/**/README.md modules/**/README.md modulegroups/**/README.md
+          git add -A -- docs/environments docs/modules docs/modulegroups
           if git diff --cached --quiet; then
             exit 0
           fi
