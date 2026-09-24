@@ -32,10 +32,11 @@ jobs:
               fi
               output_directory="docs/$root/$relative_directory"
               mkdir -p "$output_directory"
+              output_file="$(pwd)/$output_directory/README.md"
               terraform-docs markdown table \
                 --indent 2 \
                 --output-mode inject \
-                --output-file "$output_directory/README.md" \
+                --output-file "$output_file" \
                 --output-template "$template" \
                 "$directory"
             done < <(find "$root" -type f -name '*.tf' -not -path '*/.terraform/*' -exec dirname {} \; | sort -u)
