@@ -10,9 +10,6 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: write
-    strategy:
-      matrix:
-        root: [environments, modules, modulegroups]
     steps:
       - uses: actions/checkout@v7
         with:
@@ -20,7 +17,7 @@ jobs:
       - name: Generate docs
         uses: terraform-docs/gh-actions@v1
         with:
-          working-dir: ${{ matrix.root }}/
+          working-dir: ./
           recursive: true
           recursive-path: .
           output-file: README.md
