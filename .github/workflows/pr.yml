@@ -10,9 +10,6 @@ on:
       - "modules/**/*.tf"
       - "modulegroups/**/*.tf"
       - ".github/workflows/pr.yml"
-      - ".github/workflows/doco.yml"
-      - ".github/workflows/lint.yml"
-      - ".prettierignore"
 
 concurrency:
   group: terraform-plan-${{ github.event.pull_request.number }}
