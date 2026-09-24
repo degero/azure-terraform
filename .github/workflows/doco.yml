@@ -22,6 +22,7 @@ jobs:
         with:
           working-dir: ${{ matrix.root }}/
           recursive: true
+          recursive-path: .
           output-file: README.md
           output-method: inject
           git-push: true
