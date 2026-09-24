@@ -6,55 +6,52 @@ on:
 
 jobs:
   docs:
-    name: Generate docs
+    name: Generate docs (${{ matrix.root }})
     runs-on: ubuntu-latest
     permissions:
       contents: write
-    env:
-      TERRAFORM_DOCS_VERSION: "0.20.0"
+    strategy:
+      max-parallel: 1
+      matrix:
+        root: [environments, modules, modulegroups]
     steps:
       - uses: actions/checkout@v7
         with:
           ref: ${{ github.event.pull_request.head.ref }}
+
       - name: Install terraform-docs
+        if: hashFiles(format('{0}/**', matrix.root)) != ''
+        run: bash scripts/actions/install-terraform-docs.sh
+
+      - name: Generate docs/${{ matrix.root }}/README.md
+        if: hashFiles(format('{0}/**', matrix.root)) != ''
         run: |
-          curl -sSLo /tmp/terraform-docs.tar.gz "https://github.com/terraform-docs/terraform-docs/releases/download/v${VERSION}/terraform-docs-v${VERSION}-linux-amd64.tar.gz"
-          tar -xzf /tmp/terraform-docs.tar.gz -C /tmp terraform-docs
-          chmod +x /tmp/terraform-docs
-          sudo mv /tmp/terraform-docs /usr/local/bin/terraform-docs
-          terraform-docs --version
-      - name: Generate docs
-        run: |
-          template=$'<!-- BEGIN_TF_DOCS -->\n{{ .Content }}\n<!-- END_TF_DOCS -->'
-          for root in environments modules modulegroups; do
-            mkdir -p "docs/$root"
-            while IFS= read -r directory; do
-              if [[ "$directory" == "$root" ]]; then
-                relative_directory=""
-              else
-                relative_directory="${directory#"$root"/}"
-              fi
-              output_directory="docs/$root/$relative_directory"
-              mkdir -p "$output_directory"
-              output_file="$(pwd)/$output_directory/README.md"
-              terraform-docs markdown table \
-                --indent 2 \
-                --output-mode inject \
-                --output-file "$output_file" \
-                --output-template "$template" \
-                "$directory"
-            done < <(find "$root" -type f -name '*.tf' -not -path '*/.terraform/*' -exec dirname {} \; | sort -u)
-          done
-      - name: Format generated documentation
-        run: |
-          npx prettier --write "docs/{environments,modules,modulegroups}/**/README.md"
-      - name: Commit and push generated documentation
+          root="${{ matrix.root }}"
+          mkdir -p "docs/${root}"
+          {
+            echo "# ${root}"
+            find "$root" -name '*.tf' -not -path '*/.terraform/*' -exec dirname {} \; \
+              | sort -u \
+              | while read -r dir; do
+                  echo
+                  echo "## ${dir}"
+                  terraform-docs markdown table --hide header --indent 3 "$dir"
+                done
+          } > "docs/${root}/README.md"
+
+      - name: Run custom script
+        if: hashFiles(format('{0}/**', matrix.root)) != ''
+        run: bash scripts/actions/my-custom-script.sh "${{ matrix.root }}"
+
+      - name: Commit and push
+        if: hashFiles(format('{0}/**', matrix.root)) != ''
         run: |
           git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add -A -- docs/environments docs/modules docs/modulegroups
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add -A "docs/${{ matrix.root }}"
           if git diff --cached --quiet; then
+            echo "No changes to commit"
             exit 0
           fi
-          git commit -m "terraform-docs: automated action"
-          git push
+          git commit -m "docs: update terraform-docs for ${{ matrix.root }}"
+          git pull

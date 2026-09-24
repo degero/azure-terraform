@@ -29,21 +29,21 @@ jobs:
   #     security-events: write
   #   uses: ./.github/workflows/_shared.yml
 
-  plan:
-    # needs: shared
-    name: Terraform Plan
-    permissions:
-      id-token: write
-      contents: read
-      pull-requests: write
-      security-events: write
-    uses: degero/azure-terraform/.github/workflows/tf-plan.yml@main
-    strategy:
-      max-parallel: 1
-      matrix:
-        environment: ${{ fromJSON(vars.TF_ENVIRONMENTS) }}
-    with:
-      environment: ${{ matrix.environment }}
+  # plan:
+  #   # needs: shared
+  #   name: Terraform Plan
+  #   permissions:
+  #     id-token: write
+  #     contents: read
+  #     pull-requests: write
+  #     security-events: write
+  #   uses: degero/azure-terraform/.github/workflows/tf-plan.yml@main
+  #   strategy:
+  #     max-parallel: 1
+  #     matrix:
+  #       environment: ${{ fromJSON(vars.TF_ENVIRONMENTS) }}
+  #   with:
+  #     environment: ${{ matrix.environment }}
   doco:
     needs: plan
     name: Generate Docs
