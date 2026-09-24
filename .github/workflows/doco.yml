@@ -17,9 +17,14 @@ jobs:
         with:
           ref: ${{ github.event.pull_request.head.ref }}
       - name: Install terraform-docs
-        run: bash scripts/actions/install-terraform-docs.sh
+        run: |
+          curl -sSLo /tmp/terraform-docs.tar.gz \
+            "https://github.com/terraform-docs/terraform-docs/releases/download/v${VERSION}/terraform-docs-v${VERSION}-linux-amd64.tar.gz"
+          tar -xzf /tmp/terraform-docs.tar.gz -C /tmp terraform-docs
+          chmod +x /tmp/terraform-docs
+          sudo mv /tmp/terraform-docs /usr/local/bin/terraform-docs
+          terraform-docs --version
       - name: Generate docs
-        shell: bash
         run: |
           template=$'<!-- BEGIN_TF_DOCS -->\n{{ .Content }}\n<!-- END_TF_DOCS -->'
           for root in environments modules modulegroups; do
@@ -42,11 +47,9 @@ jobs:
             done < <(find "$root" -type f -name '*.tf' -not -path '*/.terraform/*' -exec dirname {} \; | sort -u)
           done
       - name: Format generated documentation
-        shell: bash
         run: |
-          npx prettier --write "docs/environments/**/README.md" "docs/modules/**/README.md" "docs/modulegroups/**/README.md"
+          npx prettier --write "docs/{environments,modules,modulegroups}/**/README.md"
       - name: Commit and push generated documentation
-        shell: bash
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
@@ -56,23 +59,3 @@ jobs:
           fi
           git commit -m "terraform-docs: automated action"
           git push
-
-  # docs:
-  #   name: Generate docs
-  #   runs-on: ubuntu-latest
-  #   permissions:
-  #     contents: write
-  #   env:
-  #     TERRAFORM_DOCS_VERSION: "0.20.0"
-  #   steps:
-  #     - uses: actions/checkout@v7
-  #       with:
-  #         ref: ${{ github.event.pull_request.head.ref }}
-  # - name: Install terraform-docs
-  #   run: bash scripts/actions/install-terraform-docs.sh
-
-  # - name: Generate consolidated docs/README.md
-  #   run: bash scripts/actions/generate-docs.sh
-
-  # - name: Commit and push docs changes
-  #   run: bash scripts/actions/commit-docs.sh
