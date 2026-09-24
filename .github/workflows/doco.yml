@@ -10,23 +10,28 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: write
+    env:
+      TERRAFORM_DOCS_VERSION: "0.20.0"
     steps:
       - uses: actions/checkout@v7
         with:
           ref: ${{ github.event.pull_request.head.ref }}
+      - name: Install terraform-docs
+        run: bash scripts/actions/install-terraform-docs.sh
       - name: Generate docs
-        uses: terraform-docs/gh-actions@v1
-        with:
-          working-dir: ./
-          recursive: true
-          recursive-path: .
-          output-file: README.md
-          output-method: inject
-          git-push: false
+        shell: bash
+        run: |
+          terraform-docs markdown table \
+            --indent 2 \
+            --output-mode inject \
+            --output-file README.md \
+            --output-template $'<!-- BEGIN_TF_DOCS -->\n{{ .Content }}\n<!-- END_TF_DOCS -->' \
+            --recursive \
+            --recursive-path . \
+            .
       - name: Format generated documentation
         shell: bash
         run: |
-          find environments modules modulegroups -name README.md -exec chmod u+rw {} +
           npx prettier --write "environments/**/README.md" "modules/**/README.md" "modulegroups/**/README.md"
       - name: Commit and push generated documentation
         shell: bash
