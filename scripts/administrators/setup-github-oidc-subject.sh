@@ -54,7 +54,7 @@ else
   set +a
 
   : "${GITHUB_REPOS:?GITHUB_REPOS is not set in .env}"
-  read -ra repos <<< "$GITHUB_REPOS"
+  read -ra repos <<<"$GITHUB_REPOS"
 fi
 
 keys=()
@@ -78,13 +78,13 @@ for repo in "${repos[@]}"; do
   done
   gh api "${args[@]}"
 
-#   gh api --method PUT "repos/$repo/actions/oidc/customization/sub" \
-#     --input - <<'EOF'
-# {
-#   "use_default": false,
-#   "include_claim_keys": ["repository_owner_id", "repository_id", "environment", "job_workflow_ref"]
-# }
-# EOF
+  #   gh api --method PUT "repos/$repo/actions/oidc/customization/sub" \
+  #     --input - <<'EOF'
+  # {
+  #   "use_default": false,
+  #   "include_claim_keys": ["repository_owner_id", "repository_id", "environment", "job_workflow_ref"]
+  # }
+  # EOF
 
   echo "  -> confirming:"
   gh api "repos/$repo/actions/oidc/customization/sub"

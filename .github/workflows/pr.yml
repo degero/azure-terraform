@@ -3,6 +3,13 @@ name: PR
 on:
   pull_request:
     branches: [main]
+    paths:
+      - "environments/**/*.tf"
+      - "environments/**/*.tfvars"
+      - "environments/**/*.hcl"
+      - "modules/**/*.tf"
+      - "modulegroups/**/*.tf"
+      - ".github/workflows/pr.yml"
 
 concurrency:
   group: terraform-plan-${{ github.event.pull_request.number }}
@@ -14,28 +21,29 @@ permissions:
   pull-requests: write
 
 jobs:
-  shared:
-    name: Shared
-    permissions:
-      contents: read
-      actions: read # for private repo
-      security-events: write
-    uses: ./.github/workflows/_shared.yml
+  # shared:
+  #   name: Shared
+  #   permissions:
+  #     contents: read
+  #     actions: read # for private repo
+  #     security-events: write
+  #   uses: ./.github/workflows/_shared.yml
 
-  plan:
-    needs: shared
-    name: Terraform Plan
-    permissions:
-      id-token: write
-      contents: read
-      pull-requests: write
-      security-events: write
-    uses: ./.github/workflows/tf-plan.yml
-    strategy:
-      matrix:
-        environment: ${{ fromJSON(vars.TF_ENVIRONMENTS) }}
-    with:
-      environment: ${{ matrix.environment }}
+  # plan:
+  #   # needs: shared
+  #   name: Terraform Plan
+  #   permissions:
+  #     id-token: write
+  #     contents: read
+  #     pull-requests: write
+  #     security-events: write
+  #   uses: degero/azure-terraform/.github/workflows/tf-plan.yml@main
+  #   strategy:
+  #     max-parallel: 1
+  #     matrix:
+  #       environment: ${{ fromJSON(vars.TF_ENVIRONMENTS) }}
+  #   with:
+  #     environment: ${{ matrix.environment }}
   doco:
     needs: plan
     name: Generate Docs
@@ -44,13 +52,13 @@ jobs:
     uses: ./.github/workflows/doco.yml
   # If you want to apply to dev on PRs
   # TODO comment out
-  apply: # apply to lowest environment only
-    needs: [plan, doco]
-    name: Terraform Apply
-    permissions:
-      contents: read
-      id-token: write
-    uses: ./.github/workflows/tf-apply.yml
-    with:
-      environment: ${{ fromJSON(vars.TF_ENVIRONMENTS)[0] }}
-      plan_blob_name: ${{ needs.plan.outputs.plan_blob_name }}
+  # apply: # apply to lowest environment only
+  #   needs: [plan, doco]
+  #   name: Terraform Apply
+  #   permissions:
+  #     contents: read
+  #     id-token: write
+  #   uses: degero/azure-terraform/.github/workflows/tf-apply.yml@main
+  #   with:
+  #     environment: ${{ fromJSON(vars.TF_ENVIRONMENTS)[0] }}
+  #     plan_blob_name: ${{ needs.plan.outputs.plan_blob_name }}

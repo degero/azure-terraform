@@ -14,8 +14,7 @@ set -a
 source "$env_file"
 set +a
 
-read -ra envs <<< "$ENVS"
-read -ra repos <<< "$GITHUB_REPOS"
+read -ra envs <<<"$ENVS"
 
 # Safeguard against line breaks returned in az cli tsv query assignment
 # to variables
@@ -72,7 +71,7 @@ for env in "${envs[@]}"; do
     --auth-mode login
 
   # TF Plan container policy delete after 7 days
-  cat > policy.json <<'EOF'
+  cat >policy.json <<'EOF'
 {
   "rules": [
     {
@@ -122,7 +121,7 @@ EOF
 
     echo "Assigning Role Contributor on /subscriptions/${deployment_subscription_id} for ${identity_name}"
 
-   # This is not locked down for ease of demo purposes, not recommended for prod
+    # This is not locked down for ease of demo purposes, not recommended for prod
     az role assignment create -o none \
       --assignee-object-id $identity_principal_id \
       --assignee-principal-type ServicePrincipal \
@@ -144,10 +143,10 @@ EOF
   echo "AZURE_SUBSCRIPTION_ID: $subscription_id"
   echo "TFPLAN_STORAGE_ACCOUNT: $storage_name"
   echo "Run 'setup-cicd-credentials.sh' to assign these in your github account and setup deployment environments"
-  echo ""W
+  echo ""
   echo "=== Settings to add to your /environments/$env/backend.hcl file - Ensure devs have Storage Blob Data Contributor access =="
-  echo "resource_group_name = "$resource_group""
-  echo "storage_account_name = "$storage_name""
+  echo "resource_group_name = $resource_group"
+  echo "storage_account_name = $storage_name"
   echo ""
   echo "=== Done with environment: $env creation ==="
   echo
@@ -155,5 +154,8 @@ EOF
   tfplan_sa_names+=("${storage_name}")
 done
 
-tfplan_sa_list="$(IFS=' '; echo "${tfplan_sa_names[*]}")"
-echo "TFPLAN_STORAGE_ACCOUNTS=\"$tfplan_sa_list\"" >> "$env_file"
+tfplan_sa_list="$(
+  IFS=' '
+  echo "${tfplan_sa_names[*]}"
+)"
+echo "TFPLAN_STORAGE_ACCOUNTS=\"$tfplan_sa_list\"" >>"$env_file"
