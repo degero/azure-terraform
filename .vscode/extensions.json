@@ -3,8 +3,6 @@
     "4ops.terraform",
     "hashicorp.terraform",
     "streetsidesoftware.code-spell-checker",
-    "esbenp.prettier-vscode",
-    "ms-vscode.powershell",
-    "foxundermoon.shell-format"
+    "esbenp.prettier-vscode"
   ]
 }

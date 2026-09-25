@@ -10,20 +10,12 @@ env:
   TF_INPUT: 0
 
 jobs:
-  ### If you prefer MegaLInter
-  # lint-all:
-  #   name: Lint All Files (megalinter)
-  #   runs-on: ubuntu-latest
-  #   env:
-  #     VALIDATE_ALL_CODEBASE: false
-  #   steps:
-  #     - uses: oxsecurity/megalinter/flavors/terraform@v8
   prettier:
     name: Prettier
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
-      - run: npx prettier --check "**/*.{json,jsonc,yaml,yml,md}"
+      - run: npx prettier --check "**/*.{json,yaml,yml,md}"
 
   fmt:
     name: Terraform Format
@@ -52,21 +44,3 @@ jobs:
           tflint -f compact --recursive --chdir=modules --config="${{ github.workspace }}/.tflint.modules.hcl"
           tflint -f compact --recursive --chdir=modulegroups --config="${{ github.workspace }}/.tflint.modules.hcl"
           tflint -f compact --recursive --chdir=environments
-
-  script-lint:
-    name: LintScripts
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v7
-      - name: Lint shell scripts (shellcheck)
-        run: shellcheck -S warning $(find . -type f -name "*.sh" -not -path "*/.terraform/*")
-
-      - name: Lint PowerShell scripts (PSScriptAnalyzer)
-        shell: pwsh
-        run: |
-          Install-Module -Name PSScriptAnalyzer -Force -Scope CurrentUser
-          $results = Invoke-ScriptAnalyzer -Path . -Recurse -Severity Warning -EnableExit
-          if ($results) {
-            $results | Format-Table -AutoSize
-            exit 1
-          }

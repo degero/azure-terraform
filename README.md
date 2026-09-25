@@ -59,10 +59,8 @@ use_oidc = true
 If you have appropriate access, assign yourself access to the dev tfstate storage:
 
 ```
-az ad signed-in-user show --query id -o tsv
-
 az role assignment create \
-  --assignee your-id \
+  --assignee "$(az ad signed-in-user show --query id -o tsv)" \
   --role "Storage Blob Data Contributor" \
   --scope "/subscriptions/<subscription-id>/resourceGroups/<resource-group>/providers/Microsoft.Storage/storageAccounts/<storage-account-name>/blobServices/default/containers/tfstate"
 ```
@@ -74,6 +72,7 @@ After cloning a repo:
 ```
 git config core.hooksPath .githooks
 
+
 cd environments/dev
 ../../scripts/tf-init.sh/ps1
 
@@ -84,7 +83,10 @@ terraform workspace new <issuenumber> (so workspace is unique)
 terraform plan -out="tfplan"
 terraform apply tfplan
 
+
 # before committing changes run in repo root:
+
+
 
 
 # after PR complete
@@ -130,43 +132,36 @@ Recommended for higher environments:
 - Place terraform UAMI, federated credentials, storage etc in a separate subscription to deployment environments
 - Isolate deployment envs to separate subscriptions
 
-You could adopt components of the /bootstrap of [azure-samples/github-terraform-oidc-ci-cd](https://github.com/azure-samples/github-terraform-oidc-ci-cd) to implement these note however tfstate is only separated by container.
+You could adopt components of the /bootstrap of [azure-samples/github-terraform-oidc-ci-cd](https://github.com/azure-samples/github-terraform-oidc-ci-cd) to implement these note however tfstate is only seperated by container.
 
 modules/ ← atomic modules only (one resource type each)
 ├── compute/
-│ ├── functionapp/functionapp.tf
-│ └── vm/vm.tf
+│ ├── functionapp/
+│ └── vm/
 ├── storage/
-│ └── account/storageaccount.tf
+│ └── account/
 ├── networking/
-│ ├── vnet/vnet.tf
-│ └── subnet/subnet.tf
-├── secrets/
-│ └── keyvault/storageaccount.tf
+│ ├── vnet/
+│ └── subnet/
+└── security/
+└── keyvault/
 
-modulegroups/ ← composite modules (patterns of primitives)
-├── function-app-order-process/
-└─── function-app-order-process.tf # calls modules/compute/functionapp + modules/storage/account
+compositions/ ← composite modules (patterns of primitives)
+├── function-app/
+├── function-app.tf # calls modules/compute/functionapp + modules/storage/account
+├── variables.tf
+└── outputs.tf
 
 environments/
 ├── dev/
-│ ├── terraform.tfvars
-│ ├── backend.hcl
-│ └── main.tf # root module for ENV calls modules/, and compositions/ etc.
+├── terraform.tfvars
+├── backend.hcl
+└── main.tf # calls compositions/function-app, modules/networking, etc.
 
 ### Azure tooling
 
 aztfexport
 https://learn.microsoft.com/en-us/azure/developer/terraform/azure-export-for-terraform/export-terraform-overview
-
-### Linting and Formatters
-
-If changing .sh/.ps1 scripts run:
-
-```
-shellcheck -S warning $(find . -type f -name "*.sh" -not -path "*/.terraform/*")
-Invoke-ScriptAnalyzer -Path . -Recurse -Severity Warning
-```
 
 ## Troubleshooting
 
@@ -183,7 +178,7 @@ chmod +x ./scripts/prepush.sh
 
 #### Environments
 
-For each target environment workflows expect two Github Environments: env and env-plan. This is done to allow env based var/secret access and independent approval gating.
+For each target environment workflows expect two Github Environments: env and env-plan. This is done to allow env based var/secret acesss and independent approval gating.
 
 #### Release please
 
@@ -193,10 +188,10 @@ Change in github: Settings->General->Pull Requests->Default Commit Message as PR
 
 ### Overview of env
 
-$env-plan — no protection rules, deployment branches: "No restriction"
+$env-plan   — no protection rules, deployment branches: "No restriction"
 $env — protection rules as appropriate (none for dev/test, required reviewers for staging/preprod)
 
-$env-plan SP → subject: repo:$repo:environment:$env-plan
+$env-plan SP  →  subject: repo:$repo:environment:$env-plan
 $env SP → subject: repo:$repo:environment:$env
 
 ## Links
