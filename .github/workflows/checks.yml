@@ -8,7 +8,6 @@ permissions: {}
 jobs:
   validate:
     name: Terraform Validate
-    runs-on: ubuntu-latest
     permissions:
       contents: read
       actions: read # for private repo
@@ -20,18 +19,19 @@ jobs:
     uses: ./.github/workflows/tf-validate.yml
     with:
       environment: ${{ matrix.environment }}
+  checkov-repo:
+    name: Checkov Terraform (whole repo)
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v7
       # Checkov is run on created tfplan files during main branch trigger
-      - name: Checkov Terraform (whole repo)
+      - name: Checkov Terraform
         uses: bridgecrewio/checkov-action@master
         with:
-          framework: terraform
-          soft_fail: false
-          output_format: cli,sarif
-          output_file_path: console,results.sarif
-      - name: Checkov Terraform
-        uses: bridgecrewio/checkov-action@a8664e3a0549367977f0cda990a34311835c87c0 #v12.3123.0
-        with:
           directory: ./
+          framework: terraform
           soft_fail: false
           output_format: cli,sarif
           output_file_path: console,results.sarif
