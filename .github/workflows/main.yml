@@ -22,7 +22,6 @@ jobs:
 
   plan:
     name: Terraform Plan
-    needs: shared
     permissions:
       id-token: write
       contents: read
