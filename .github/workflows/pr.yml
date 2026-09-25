@@ -36,12 +36,12 @@ jobs:
   # If you want terraform apply to your first (lowest) env on PRs
   apply:
     if: ${{ vars.PR_TF_APPLY == 'true' }}
-    needs: plan
+    needs: [plan, checks]
     name: Terraform Apply
     permissions:
       contents: read
       id-token: write
     uses: degero/azure-terraform/.github/workflows/tf-apply.yml@main
     with:
-      environment: ${{ fromJSON(vars.TF_ENVIRONMENTS)[0] }}
-      plan_blob_name: ${{ needs.plan.outputs.plan_blob_name }}
+      environment: ${{ fromJSON(vars.TF_ENVIRONMENTS)[0] }} #tf-plan.yml has plan_blob_name but using this deterministic for parallel changes
+      plan_blob_name: ${{ github.repository }}/${{ matrix.environment }}/${{ github.run_id }}-${{ github.run_attempt }}/tfplan
