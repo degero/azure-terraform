@@ -11,13 +11,13 @@ concurrency:
 permissions: {}
 
 jobs:
-  shared:
-    name: Shared
+  checks:
+    name: Checks
     permissions:
       contents: read
       actions: read # for private repo
       security-events: write
-    uses: ./.github/workflows/_shared.yml
+    uses: ./.github/workflows/checks.yml
 
   plan:
     # needs: shared
