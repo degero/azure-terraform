@@ -34,7 +34,7 @@ jobs:
       max-parallel: 1
       matrix:
         environment: ${{ fromJSON(vars.TF_ENVIRONMENTS) }}
-    uses: degero/azure-terraform/.github/workflows/tf-plan.yml@main
+    uses: ./.github/workflows/tf-plan.yml
     with:
       environment: ${{ matrix.environment }}
   apply:
@@ -48,7 +48,7 @@ jobs:
       max-parallel: 1
       matrix:
         environment: ${{ fromJSON(vars.TF_ENVIRONMENTS) }}
-    uses: degero/azure-terraform/.github/workflows/tf-apply.yml@main
+    uses: ./.github/workflows/tf-apply.yml
     with:
       environment: ${{ matrix.environment }}
       plan_blob_name: ${{ needs.plan.outputs.plan_blob_name }}
