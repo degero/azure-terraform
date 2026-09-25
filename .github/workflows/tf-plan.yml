@@ -87,7 +87,7 @@ jobs:
 
       - name: PR comment (borchero)
         if: ${{ vars.USE_ALTERNATE_PR_COMMENT }} == 'false' && always() && github.event_name == 'pull_request' && steps.plan.outcome == 'success'
-        uses: borchero/terraform-plan-comment@v2
+        uses: borchero/terraform-plan-comment@v3
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           planfile: tfplan
