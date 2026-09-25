@@ -59,7 +59,7 @@ jobs:
       - name: Build plan summary
         id: plan_summary
         working-directory: ${{ env.WORKING_DIR }}
-        run: |
+        run: | # TODO refac to scripts folder
           jq -r '
             def sym(a):
               if a == ["create"] then "🟢 add"
