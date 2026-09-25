@@ -59,4 +59,12 @@ else {
     Write-Information "Powershell script lint (Invoke-ScriptAnalyzer) not found locally — skipping (will still run in CI)" -InformationAction Continue
 }
 
+Write-Information "==> Github actions lint" -InformationAction Continue
+if (Get-Command actionlint -ErrorAction SilentlyContinue) {
+    actionlint
+}
+else {
+    Write-Information "Github actions lint (actionslint) not found locally — skipping (will still run in CI)" -InformationAction Continue
+}
+
 Write-Information "==> All checks passed" -InformationAction Continue
