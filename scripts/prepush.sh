@@ -71,7 +71,7 @@ else
 fi
 
 echo "==> Prettier check (json, jsonc, yaml, yml, md), cSpell check"
-if ! command -v npx >/dev/null 2>&1; then
+if command -v npx >/dev/null 2>&1; then
   npx --no-install cspell lint --no-progress --show-context .
   npx --no-install prettier --write "**/*.{json,jsonc,yaml,yml,md}"
 else
