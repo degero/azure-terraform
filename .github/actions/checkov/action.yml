@@ -1,0 +1,62 @@
+name: "Checkov Scan"
+description: "Run Checkov against Terraform. Caller workflow must grant security-events: write if using sarif output with upload-sarif."
+inputs:
+  framework:
+    description: "Checkov framework value, e.g. terraform or terraform_plan"
+    required: false
+    default: "terraform"
+  directory:
+    description: "Directory to scan (source mode)"
+    required: false
+    default: "."
+  file:
+    description: "Path to plan JSON (plan mode, used with framework: terraform_plan)"
+    required: false
+    default: ""
+  soft_fail:
+    description: "Do not fail the job on findings"
+    required: false
+    default: "false"
+  skip_check:
+    description: "Comma-separated check IDs to skip"
+    required: false
+    default: ""
+  output_format:
+    description: "Comma-separated output formats, e.g. cli,sarif"
+    required: false
+    default: "cli"
+  output_file_path:
+    description: "Comma-separated destinations matching output_format positionally, e.g. console,results.sarif"
+    required: false
+    default: "console"
+outputs:
+  sarif_file:
+    description: "Path to the generated SARIF file, if sarif was requested in output_format"
+    value: ${{ steps.resolve-sarif.outputs.path }}
+
+runs:
+  using: "composite"
+  steps:
+    - name: Run Checkov
+      uses: bridgecrewio/checkov-action@444c9db6fa75e2d9c19ebf1fde7322089be9009e # v12.3125.0
+      with:
+        directory: ${{ inputs.directory }}
+        file: ${{ inputs.file }}
+        framework: ${{ inputs.framework }}
+        soft_fail: ${{ inputs.soft_fail }}
+        skip_check: ${{ inputs.skip_check }}
+        output_format: ${{ inputs.output_format }}
+        output_file_path: ${{ inputs.output_file_path }}
+
+    - name: Resolve sarif output path
+      id: resolve-sarif
+      if: contains(inputs.output_format, 'sarif')
+      shell: bash
+      run: |
+        IFS=',' read -ra FORMATS <<< "${{ inputs.output_format }}"
+        IFS=',' read -ra PATHS <<< "${{ inputs.output_file_path }}"
+        for i in "${!FORMATS[@]}"; do
+          if [ "${FORMATS[$i]}" = "sarif" ]; then
+            echo "path=${PATHS[$i]}" >> "$GITHUB_OUTPUT"
+          fi
+        done

@@ -8,49 +8,40 @@ concurrency:
   group: terraform-plan-${{ github.event.pull_request.number }}
   cancel-in-progress: true
 
-permissions:
-  id-token: write
-  contents: read
-  pull-requests: write
+permissions: {}
 
 jobs:
-  shared:
-    name: Shared
+  checks:
+    name: Checks
     permissions:
       contents: read
       actions: read # for private repo
       security-events: write
-    uses: ./.github/workflows/_shared.yml
+    uses: ./.github/workflows/checks.yml
 
   plan:
-    needs: shared
     name: Terraform Plan
     permissions:
       id-token: write
       contents: read
       pull-requests: write
       security-events: write
-    uses: ./.github/workflows/tf-plan.yml
+    uses: degero/azure-terraform/.github/workflows/tf-plan.yml@main
     strategy:
+      max-parallel: 1
       matrix:
         environment: ${{ fromJSON(vars.TF_ENVIRONMENTS) }}
     with:
       environment: ${{ matrix.environment }}
-  doco:
+  # If you want terraform apply to your first (lowest) env on PRs
+  apply:
+    if: ${{ vars.PR_TF_APPLY == 'true' }}
     needs: plan
-    name: Generate Docs
-    permissions:
-      contents: write
-    uses: ./.github/workflows/doco.yml
-  # If you want to apply to dev on PRs
-  # TODO comment out
-  apply: # apply to lowest environment only
-    needs: [plan, doco]
     name: Terraform Apply
     permissions:
       contents: read
       id-token: write
-    uses: ./.github/workflows/tf-apply.yml
+    uses: degero/azure-terraform/.github/workflows/tf-apply.yml@main
     with:
       environment: ${{ fromJSON(vars.TF_ENVIRONMENTS)[0] }}
       plan_blob_name: ${{ needs.plan.outputs.plan_blob_name }}

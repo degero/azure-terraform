@@ -11,6 +11,8 @@ on:
         description: TF plan blob name
         type: string
 
+permissions: {}
+
 jobs:
   apply:
     name: Terraform Apply

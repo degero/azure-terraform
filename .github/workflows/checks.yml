@@ -3,33 +3,15 @@ name: Checks
 on:
   workflow_call:
 
+permissions: {}
+
 jobs:
-  checkov:
-    name: Checkov Terraform (entire repo)
+  validate:
+    name: Terraform Validate
     permissions:
       contents: read
       actions: read # for private repo
       security-events: write
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v7
-      - name: Checkov Terraform
-        uses: bridgecrewio/checkov-action@a8664e3a0549367977f0cda990a34311835c87c0 #v12.3123.0
-        with:
-          directory: ./
-          framework: terraform
-          soft_fail: false
-          output_format: cli,sarif
-          output_file_path: console,results.sarif
-      - name: Upload SARIF file
-        if: success() || failure()
-        uses: github/codeql-action/upload-sarif@v4
-        with:
-          sarif_file: results.sarif
-          category: checkov
-  validate:
-    name: Terraform Validate
-    needs: checkov
     strategy:
       max-parallel: 1 # run dev before test, and only if dev passes
       matrix:
@@ -37,3 +19,17 @@ jobs:
     uses: ./.github/workflows/tf-validate.yml
     with:
       environment: ${{ matrix.environment }}
+  checkov-repo:
+    name: Checkov Terraform (whole repo)
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v7
+      # Checkov is run on created tfplan files during main branch trigger
+      - name: Checkov Terraform
+        uses: bridgecrewio/checkov-action@master
+        with:
+          directory: ./
+          framework: terraform
+          soft_fail: false

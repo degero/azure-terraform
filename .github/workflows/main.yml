@@ -4,9 +4,7 @@ on:
   push:
     branches: [main]
 
-permissions:
-  contents: read
-  id-token: write
+permissions: {}
 
 concurrency:
   group: terraform-apply
@@ -14,17 +12,16 @@ concurrency:
 
 # main.yml
 jobs:
-  shared:
-    name: Shared
+  checks:
+    name: Checks
     permissions:
       contents: read
       actions: read # for private repo
       security-events: write
-    uses: ./.github/workflows/_shared.yml
+    uses: ./.github/workflows/checks.yml
 
   plan:
     name: Terraform Plan
-    needs: shared
     permissions:
       id-token: write
       contents: read
@@ -37,8 +34,9 @@ jobs:
     uses: ./.github/workflows/tf-plan.yml
     with:
       environment: ${{ matrix.environment }}
+
   apply:
-    needs: plan
+    needs: checkov-terraform
     name: Terraform Apply
     permissions:
       contents: read

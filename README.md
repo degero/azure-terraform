@@ -53,6 +53,7 @@ use_oidc = true
 1. Setup TF state stores with [scripts/administrators/setup-azure-tfstate-store.sh](scripts/administrators/setup-azure-tfstate-store.sh)
 1. Setup Github: CICD federated credentials, Environments, Environment vars [](/scripts/administrators/setup-cicd-credentials.sh)
 1. Update Github Environments variable TF_PLAN_STORAGE_ACCOUNT with the appropriate storage account name
+1. If you want PRs to apply terraform the the lowest (first) env set a repo var `PR_TF_APPLY` as `true`
 
 ### Developers
 
@@ -188,10 +189,10 @@ Change in github: Settings->General->Pull Requests->Default Commit Message as PR
 
 ### Overview of env
 
-$env-plan   — no protection rules, deployment branches: "No restriction"
+$env-plan — no protection rules, deployment branches: "No restriction"
 $env — protection rules as appropriate (none for dev/test, required reviewers for staging/preprod)
 
-$env-plan SP  →  subject: repo:$repo:environment:$env-plan
+$env-plan SP → subject: repo:$repo:environment:$env-plan
 $env SP → subject: repo:$repo:environment:$env
 
 ## Links
