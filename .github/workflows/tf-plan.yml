@@ -81,14 +81,14 @@ jobs:
           ' tfplan.json > plan_summary.md
 
       - name: PR comment (marocchino)
-        if: ${{ vars.USE_ALTERNATE_PR_COMMENT }} == 'true' && always() && github.event_name == 'pull_request' && steps.plan.outcome == 'success'
+        if: vars.USE_ALTERNATE_PR_COMMENT == 'true' && always() && github.event_name == 'pull_request' && steps.plan.outcome == 'success'
         uses: marocchino/sticky-pull-request-comment@v2
         with:
           header: "terraform-plan-marocchino-${{ inputs.environment }}"
           path: ${{ env.WORKING_DIR }}/plan_summary.md
 
       - name: PR comment (borchero)
-        if: ${{ vars.USE_ALTERNATE_PR_COMMENT }} == 'false' && always() && github.event_name == 'pull_request' && steps.plan.outcome == 'success'
+        if: vars.USE_ALTERNATE_PR_COMMENT == 'false' && always() && github.event_name == 'pull_request' && steps.plan.outcome == 'success'
         uses: borchero/terraform-plan-comment@v2
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
@@ -149,13 +149,13 @@ jobs:
           file: ${{ env.WORKING_DIR }}/tfplan.json
           framework: terraform_plan
           soft_fail: false
-          output-format: cli,sarif
-          output-file-path: console,results.sarif
+          output_format: cli,sarif
+          output_file_path: console,results.sarif
 
       # only plan scan uploaded, check.yml checkov call does not upload
       - name: Upload SARIF file
         if: ${{ github.ref == 'refs/heads/main' && github.event_name != 'pull_request' && (success() || failure()) }}
         uses: github/codeql-action/upload-sarif@v4
         with:
-          sarif_file: ${{ steps.checkov.outputs.sarif-file }}
+          sarif_file: ${{ steps.checkov.outputs.sarif_file }}
           category: checkov-terraform

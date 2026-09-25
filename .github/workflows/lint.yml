@@ -72,7 +72,7 @@ jobs:
     steps:
       - uses: actions/checkout@v7
       - name: Lint shell scripts (shellcheck)
-        run: shellcheck -S warning $(find . -type f -name "*.sh" -not -path "*/.terraform/*")
+        run: find . -type f -name "*.sh" -not -path "*/.terraform/*" -exec shellcheck -S warning {} +
 
       - name: Lint PowerShell scripts (PSScriptAnalyzer)
         shell: pwsh
