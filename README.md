@@ -189,10 +189,10 @@ Change in github: Settings->General->Pull Requests->Default Commit Message as PR
 
 ### Overview of env
 
-$env-plan   — no protection rules, deployment branches: "No restriction"
+$env-plan — no protection rules, deployment branches: "No restriction"
 $env — protection rules as appropriate (none for dev/test, required reviewers for staging/preprod)
 
-$env-plan SP  →  subject: repo:$repo:environment:$env-plan
+$env-plan SP → subject: repo:$repo:environment:$env-plan
 $env SP → subject: repo:$repo:environment:$env
 
 ## Links
