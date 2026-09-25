@@ -33,7 +33,7 @@ jobs:
       WORKING_DIR: ./environments/${{ inputs.environment }}
       TFPLAN_STORAGE_ACCOUNT: ${{ vars.TF_PLAN_STORAGE_ACCOUNT }}
       TF_INPUT: 0
-
+      ENVIRONMENT: ${{ inputs.environment }}
     steps:
       - uses: actions/checkout@v7
 
@@ -43,7 +43,7 @@ jobs:
 
       - name: Terraform plan blob name
         id: plan_path
-        run: echo "plan_blob_name=${{ github.repository }}/${{ inputs.environment }}/${{ github.run_id }}-${{ github.run_attempt }}/tfplan" >> "$GITHUB_OUTPUT"
+        run: echo "plan_blob_name=${{ github.repository }}/${{ env.ENVIRONMENT }}/${{ github.run_id }}-${{ github.run_attempt }}/tfplan" >> "$GITHUB_OUTPUT"
 
       - name: Terraform Plan
         id: plan
@@ -59,7 +59,7 @@ jobs:
       - name: Build plan summary
         id: plan_summary
         working-directory: ${{ env.WORKING_DIR }}
-        run: |
+        run: | # TODO refac to scripts folder
           jq -r '
             def sym(a):
               if a == ["create"] then "🟢 add"
@@ -81,20 +81,20 @@ jobs:
           ' tfplan.json > plan_summary.md
 
       - name: PR comment (marocchino)
-        if: ${{ vars.USE_ALTERNATE_PR_COMMENT }} == 'true' && always() && github.event_name == 'pull_request' && steps.plan.outcome == 'success'
+        if: vars.USE_ALTERNATE_PR_COMMENT == 'true' && always() && github.event_name == 'pull_request' && steps.plan.outcome == 'success'
         uses: marocchino/sticky-pull-request-comment@v2
         with:
-          header: "terraform-plan-marocchino-${{ inputs.environment }}"
+          header: "terraform-plan-marocchino-${{ env.ENVIRONMENT}}"
           path: ${{ env.WORKING_DIR }}/plan_summary.md
 
       - name: PR comment (borchero)
-        if: ${{ vars.USE_ALTERNATE_PR_COMMENT }} == 'false' && always() && github.event_name == 'pull_request' && steps.plan.outcome == 'success'
+        if: vars.USE_ALTERNATE_PR_COMMENT == 'false' && always() && github.event_name == 'pull_request' && steps.plan.outcome == 'success'
         uses: borchero/terraform-plan-comment@v2
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           planfile: tfplan
           working-directory: ${{ env.WORKING_DIR }}
-          header: "🧪 Terraform Plan (borchero) — ${{ inputs.environment }}"
+          header: "🧪 Terraform Plan (borchero) — ${{ env.ENVIRONMENT}}"
 
       # Neither action above has anything to parse when `terraform plan` fails
       - name: PR comment on plan failure
@@ -105,10 +105,10 @@ jobs:
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
-            const marker = `<!-- terraform-plan-comment: ${{ inputs.environment }} -->`;
+            const marker = `<!-- terraform-plan-comment: ${{ env.ENVIRONMENT}} -->`;
             const raw = process.env.TFPLAN_RAW || '';
             const tail = raw.split('\n').slice(-40).join('\n');
-            const body = `${marker}\n## ❌ Terraform Plan failed — \`${{ inputs.environment }}\`\n\n\`\`\`\n${tail}\n\`\`\`\n\n<sub>Run: [${context.runId}](${context.payload.repository.html_url}/actions/runs/${context.runId})</sub>`;
+            const body = `${marker}\n## ❌ Terraform Plan failed — \`${{ env.ENVIRONMENT}}\`\n\n\`\`\`\n${tail}\n\`\`\`\n\n<sub>Run: [${context.runId}](${context.payload.repository.html_url}/actions/runs/${context.runId})</sub>`;
 
             const { data: comments } = await github.rest.issues.listComments({
               owner: context.repo.owner,
@@ -141,21 +141,21 @@ jobs:
             --file tfplan \
             --overwrite
 
-      - name: Checkov Terraform (tfplan) # Only scan plan on main workflow not PR
+      - name: Checkov Terraform (tfplan)
         id: checkov
-        uses: ./.github/actions/checkov
+        uses: ./.github/actions/checkov # Only scan plan on main workflow not PR
         if: ${{ github.ref == 'refs/heads/main' && github.event_name != 'pull_request' }}
         with:
           file: ${{ env.WORKING_DIR }}/tfplan.json
           framework: terraform_plan
           soft_fail: false
-          output-format: cli,sarif
-          output-file-path: console,results.sarif
+          output_format: cli,sarif
+          output_file_path: console,results.sarif
 
       # only plan scan uploaded, check.yml checkov call does not upload
       - name: Upload SARIF file
         if: ${{ github.ref == 'refs/heads/main' && github.event_name != 'pull_request' && (success() || failure()) }}
         uses: github/codeql-action/upload-sarif@v4
         with:
-          sarif_file: ${{ steps.checkov.outputs.sarif-file }}
-          category: checkov-terraform
+          sarif_file: ${{ steps.checkov.outputs.sarif_file }}
+          category: checkov-terraform-${{ env.ENVIRONMENT}}

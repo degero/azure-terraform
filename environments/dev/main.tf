@@ -24,3 +24,13 @@ module "rg" {
 
   tags = local.common_tags
 }
+
+module "storage" {
+  source = "../../modules/storage"
+
+  name                = module.naming.storage_account.name
+  resource_group_name = module.rg.resource_id
+  location            = var.location
+
+  tags = local.common_tags
+}

@@ -2,6 +2,9 @@ name: Checks
 
 on:
   workflow_call:
+  workflow_dispatch:
+  schedule:
+    - cron: "0 6 * * 1" # every Monday 06:00 UTC
 
 permissions: {}
 
@@ -11,25 +14,16 @@ jobs:
     permissions:
       contents: read
       actions: read # for private repo
-      security-events: write
     strategy:
-      max-parallel: 1 # run dev before test, and only if dev passes
       matrix:
         environment: ${{ fromJSON(vars.TF_ENVIRONMENTS) }}
     uses: ./.github/workflows/tf-validate.yml
     with:
       environment: ${{ matrix.environment }}
-  checkov-repo:
-    name: Checkov Terraform (whole repo)
-    runs-on: ubuntu-latest
+  checkov-terraform-static:
+    name: Checkov Terraform (static)
+    uses: ./.github/workflows/checkov.yml
     permissions:
       contents: read
-    steps:
-      - uses: actions/checkout@v7
-      # Checkov is run on created tfplan files during main branch trigger
-      - name: Checkov Terraform
-        uses: bridgecrewio/checkov-action@master
-        with:
-          directory: ./
-          framework: terraform
-          soft_fail: false
+      actions: read
+      security-events: write

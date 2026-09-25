@@ -1,0 +1,50 @@
+name: Checkov (terraform) # Plan-based scan lives in tf-apply.yml; this covers static HCL only
+
+on:
+  workflow_call:
+  workflow_dispatch:
+  schedule:
+    - cron: "0 6 * * 1" # every Monday 06:00 UTC
+
+permissions: {}
+
+jobs:
+  checkov-terraform-static:
+    name: Checkov Terraform (static)
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      security-events: write
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+      - name: Get changed Terraform dirs (for PR changes scan)
+        if: ${{ github.event_name == 'pull_request' }}
+        id: changed
+        run: |
+          dirs=$(git diff --name-only origin/main...HEAD -- '*.tf' | xargs -n1 dirname | sort -u)
+          echo "dirs=$dirs" >> "$GITHUB_OUTPUT"
+      - name: Checkov Terraform (static, PR changes only)
+        if: ${{ github.event_name == 'pull_request' && steps.changed.outputs.dirs != '' }}
+        uses: ./.github/actions/checkov
+        with:
+          directory: ${{ steps.changed.outputs.dirs }}
+          framework: terraform
+          soft_fail: false
+      - name: Checkov Terraform (static)
+        if: ${{ github.ref == 'refs/heads/main' && github.event_name != 'pull_request' }}
+        id: checkov
+        uses: ./.github/actions/checkov
+        with:
+          directory: ./
+          framework: terraform
+          soft_fail: false
+          output_format: cli,sarif
+          output_file_path: console,results.sarif
+      - name: Upload SARIF file (static full repo scan)
+        if: ${{ github.ref == 'refs/heads/main' && github.event_name != 'pull_request' && (success() || failure()) }}
+        uses: github/codeql-action/upload-sarif@v4
+        with:
+          sarif_file: ${{ steps.checkov.outputs.sarif_file }}
+          category: checkov-terraform-static

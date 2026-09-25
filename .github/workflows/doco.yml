@@ -8,20 +8,52 @@ permissions: {}
 
 jobs:
   docs:
-    name: Generate docs
+    name: Generate docs (${{ matrix.root }})
     runs-on: ubuntu-latest
     permissions:
       contents: write
+    strategy:
+      max-parallel: 1
+      matrix:
+        root: [environments, modules, modulegroups]
     steps:
       - uses: actions/checkout@v7
         with:
           ref: ${{ github.event.pull_request.head.ref }}
 
-      - name: Render terraform docs in /docs and push changes back to PR branch
-        uses: terraform-docs/gh-actions@6de6da0cefcc6b4b7a5cbea4d79d97060733093c #v1.4.1
-        with:
-          find-dir: .
-          recursive: true
-          output-file: docs/README.md
-          output-method: inject
-          git-push: "true"
+      - name: Install terraform-docs
+        if: hashFiles(format('{0}/**', matrix.root)) != ''
+        run: bash scripts/actions/install-terraform-docs.sh
+
+      - name: Generate docs/${{ matrix.root }}/README.md
+        if: hashFiles(format('{0}/**', matrix.root)) != ''
+        run: |
+          root="${{ matrix.root }}"
+          mkdir -p "docs/${root}"
+          {
+            echo "# ${root}"
+            find "$root" -name '*.tf' -not -path '*/.terraform/*' -exec dirname {} \; \
+              | sort -u \
+              | while read -r dir; do
+                  echo
+                  echo "## ${dir}"
+                  terraform-docs markdown table --hide header --indent 3 "$dir"
+                done
+          } > "docs/${root}/README.md"
+
+      - name: Run custom script
+        if: hashFiles(format('{0}/**', matrix.root)) != ''
+        run: bash scripts/actions/my-custom-script.sh "${{ matrix.root }}"
+
+      - name: Commit and push
+        if: hashFiles(format('{0}/**', matrix.root)) != ''
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add -A "docs/${{ matrix.root }}"
+          if git diff --cached --quiet; then
+            echo "No changes to commit"
+            exit 0
+          fi
+          git commit -m "docs: update terraform-docs for ${{ matrix.root }}"
+          git pull
