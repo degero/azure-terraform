@@ -12,9 +12,11 @@ This template is focused on the terraform and github cicd it is not opinionated 
 - Isolated terraform federated credentials + 2 UMAI per env (plan,apply) + RBAC to blob storage by environment (tfstate, tfplans containers)
 - TFPlan artifacts uploaded to blob storage (retention 7 days)
 - Named `/modules` files for easy location in VSCode (instead of lots of main.tf files)
-- Github Workflows with: Linting (tflint), Formatting (terraform fmt), Sec check (checkov), Github Environments for workflow approval, Dependabot (terraform, github actions), Doco generation (terraform-docs), Terraform Validate
-- Pre-push hook to lint and (optionally) run checkov locally
-- Prettier config for markdown / yaml / json
+- Github Workflows with: Linting (tflint,actionlint,prettier), Formatting (terraform fmt), Sec check (checkov), Github Environments for workflow approval, Dependabot (terraform, github actions), Doco generation (terraform-docs), Terraform Validate
+- Pre-push githook to validate/format terraform, lint (prettier,actionlint,powershell,shellscript) and checkov (if installed) locally
+- VSCode settings for format on save: markdown / yaml / json(c), powershell
+- Prettier rules for markdown / yaml / json(c)
+- Scripts folder for dev convenience (tfinit) and admin setup Azure terraform infra / github settings.
 
 ## Folder structure
 
@@ -57,9 +59,24 @@ use_oidc = true
 
 ### Developers
 
+**Prerequisites:**
+
+- Terraform
+
+(Optional for githook prepush)
+
+- tflint
+- Checkov
+- PowerShell (pwsh) + PSScriptAnalyzer module
+- ShellCheck
+- actionlint
+- Node.js (for npx → cspell, Prettier)
+
+**Azure Permissions:**
+
 If you have appropriate access, assign yourself access to the dev tfstate storage:
 
-```
+```bash
 az ad signed-in-user show --query id -o tsv
 
 az role assignment create \
@@ -70,13 +87,13 @@ az role assignment create \
 
 NOTE: If state storage is in a different subscription or tenant you will need access to these.
 
-After cloning a repo:
+**Development workflow:**
 
-```
-git config core.hooksPath .githooks
+```bash
+(optional: the prepush check also done in CI) git config core.hooksPath .githooks
 
-cd environments/dev
-../../scripts/tf-init.sh/ps1
+cd environments/dev (and other envs needing changes)
+../../scripts/tf-init.sh/ps1 (convenience as init needs backend.hcl file)
 
 terraform workspace new <issuenumber> (so workspace is unique)
 
@@ -87,11 +104,9 @@ terraform apply tfplan
 
 # before committing changes run in repo root:
 
-
 # after PR complete
 terraform workspace select default
 terraform workspace delete <issuenumber>
-
 
 ```
 

@@ -7,9 +7,6 @@ REPO_ROOT="$(git rev-parse --show-toplevel)"
 cd "$REPO_ROOT"
 
 
-echo "==> Prettier check (json, jsonc, yaml, yml, md)"
-npx prettier --write "**/*.{json,jsonc,yaml,yml,md}"
-
 echo "==> Terraform fmt check"
 terraform fmt -recursive -check
 
@@ -33,18 +30,23 @@ if [[ "$failed" -eq 1 ]]; then
   exit 1
 fi
 
-echo "==> tflint (modules)"
-tflint -f compact --recursive --chdir=modules      --config="$REPO_ROOT/.tflint.modules.hcl"
-tflint -f compact --recursive --chdir=modulegroups  --config="$REPO_ROOT/.tflint.modules.hcl"
+echo "==> Terraform lint (tflint)"
+if ! command -v tflint >/dev/null 2>&1; then
+  echo "==> tflint (modules)"
+  tflint -f compact --recursive --chdir=modules      --config="$REPO_ROOT/.tflint.modules.hcl"
+  tflint -f compact --recursive --chdir=modulegroups  --config="$REPO_ROOT/.tflint.modules.hcl"
 
-echo "==> tflint (environments)"
-tflint -f compact --recursive --chdir=environments
+  echo "==> tflint (environments)"
+  tflint -f compact --recursive --chdir=environments
+else
+  echo "Terraform lint (tflint) not found locally — skipping (will still run in CI)"
+fi
 
 echo "==> Checkov"
 if command -v checkov >/dev/null 2>&1; then
   checkov -d . --config-file "$REPO_ROOT/.checkov.yaml"
 else
-  echo "checkov not found locally — skipping (will still run in CI)"
+  echo "Checkov not found locally — skipping (will still run in CI)"
 fi
 
 echo "==> Powershell script lint (Invoke-ScriptAnalyzer)"
@@ -66,6 +68,14 @@ if command -v shellcheck >/dev/null 2>&1; then
   actionlint
 else
   echo "Github Actions lint (actionlint) not found locally — skipping (will still run in CI)"
+fi
+
+echo "==> Prettier check (json, jsonc, yaml, yml, md), cSpell check"
+if ! command -v npx >/dev/null 2>&1; then
+  npx --no-install cspell lint --no-progress --show-context .
+  npx --no-install prettier --write "**/*.{json,jsonc,yaml,yml,md}"
+else
+  echo "Node not found locally — skipping cSpell and Prettier (will still run in CI)"
 fi
 
 echo "==> All checks passed"
