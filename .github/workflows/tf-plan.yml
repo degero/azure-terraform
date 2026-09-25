@@ -11,6 +11,8 @@ on:
       plan_blob_name:
         value: ${{ jobs.plan.outputs.plan_blob_name }}
 
+permissions: {}
+
 jobs:
   plan:
     name: Terraform Plan
@@ -139,16 +141,22 @@ jobs:
             --file tfplan \
             --overwrite
 
-      - name: Checkov Terraform (tfplan)
-        uses: bridgecrewio/checkov-action@master
+      - name: Checkov Terraform (tfplan) # Only scan plan on main workflow not PR
+        id: checkov
+        uses: ./.github/actions/checkov
+        if: ${{ github.ref == 'refs/heads/main' && github.event_name != 'pull_request' }}
         with:
           file: ${{ env.WORKING_DIR }}/tfplan.json
           framework: terraform_plan
           soft_fail: false
-          output_format: cli,sarif
-          output_file_path: console,results.sarif
+          output-format: cli,sarif
+          output-file-path: console,results.sarif
 
-      - uses: github/codeql-action/upload-sarif@v4
+      # only upload plan scans, if you wish to also upload source scans use another
+      # category name
+      - name: Upload SARIF file
+        if: ${{ github.ref == 'refs/heads/main' && github.event_name != 'pull_request' && (success() || failure()) }}
+        uses: github/codeql-action/upload-sarif@v4
         with:
-          sarif_file: results.sarif
+          sarif_file: ${{ steps.checkov.outputs.sarif-file }}
           category: checkov

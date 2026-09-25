@@ -4,6 +4,8 @@ on:
   workflow_dispatch:
   workflow_call:
 
+permissions: {}
+
 jobs:
   terraform-unit-tests:
     name: Terraform Unit Tests

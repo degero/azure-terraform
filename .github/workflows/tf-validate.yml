@@ -8,6 +8,8 @@ on:
         type: string
         default: "dev"
 
+permissions: {}
+
 jobs:
   tf-validate:
     name: Terraform Validate

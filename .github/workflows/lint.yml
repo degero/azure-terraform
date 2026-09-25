@@ -1,10 +1,15 @@
 name: Lint
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 on:
-  workflow_call:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
 
-permissions:
-  contents: read
+permissions: {}
 
 env:
   TF_INPUT: 0
@@ -13,6 +18,8 @@ jobs:
   prettier:
     name: Prettier
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     steps:
       - uses: actions/checkout@v7
       - run: npx prettier --check "**/*.{json,yaml,yml,md}"
@@ -20,6 +27,8 @@ jobs:
   fmt:
     name: Terraform Format
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     steps:
       - uses: actions/checkout@v7
       - name: Terraform Setup
@@ -30,6 +39,8 @@ jobs:
   tflint:
     name: TFLint
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     steps:
       - uses: actions/checkout@v7
       - uses: terraform-linters/setup-tflint@1cf010d3c7aef302051ccdb68c14c5dc2efa34ef #v6.3.1
@@ -44,3 +55,32 @@ jobs:
           tflint -f compact --recursive --chdir=modules --config="${{ github.workspace }}/.tflint.modules.hcl"
           tflint -f compact --recursive --chdir=modulegroups --config="${{ github.workspace }}/.tflint.modules.hcl"
           tflint -f compact --recursive --chdir=environments
+
+  script-lint:
+    name: Lint (scripts)
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v7
+      - name: Lint shell scripts (shellcheck)
+        run: shellcheck -S warning $(find . -type f -name "*.sh" -not -path "*/.terraform/*")
+
+      - name: Lint PowerShell scripts (PSScriptAnalyzer)
+        shell: pwsh
+        run: |
+          Install-Module -Name PSScriptAnalyzer -Force -Scope CurrentUser
+          $results = Invoke-ScriptAnalyzer -Path . -Recurse -Severity Warning -EnableExit
+          if ($results) {
+            $results | Format-Table -AutoSize
+            exit 1
+          }
+  action-lint:
+    name: Lint (gh actions)
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v7
+      # run the actionlinter, will fail on errors
+      - uses: devops-actions/actionlint@e7ee33fbf5aa8c9f9ee1145137f3e52e25d6a35b #v0.1.3

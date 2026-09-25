@@ -4,9 +4,7 @@ on:
   push:
     branches: [main]
 
-permissions:
-  contents: read
-  id-token: write
+permissions: {}
 
 concurrency:
   group: terraform-apply
@@ -37,8 +35,9 @@ jobs:
     uses: ./.github/workflows/tf-plan.yml
     with:
       environment: ${{ matrix.environment }}
+
   apply:
-    needs: plan
+    needs: checkov-terraform
     name: Terraform Apply
     permissions:
       contents: read
