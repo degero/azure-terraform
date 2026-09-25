@@ -27,7 +27,7 @@ jobs:
       - uses: actions/checkout@v7
       # Checkov is run on created tfplan files during main branch trigger
       - name: Checkov Terraform
-        uses: bridgecrewio/checkov-action@master
+        uses: ./.github/actions/checkov
         with:
           directory: ./
           framework: terraform
