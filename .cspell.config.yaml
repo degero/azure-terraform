@@ -1,8 +1,76 @@
 version: "0.2"
 language: "en-GB"
-ignorePaths: []
-dictionaryDefinitions: []
-dictionaries: ["en-GB"]
-words: []
+
+useGitignore: true
+
+ignorePaths:
+  - "**/.terraform/**"
+  - "**/.terraform.lock.hcl"
+  - "**/*.tfstate"
+  - "**/*.tfstate.backup"
+  - "**/*.tfplan"
+  - "**/node_modules/**"
+  - "**/*.lock"
+  - ".git/**"
+
+dictionaries:
+  - "en-gb"
+  - "softwareTerms"
+  - "misc"
+  - "terraform"
+  - "aws"
+  - "bash"
+  - "powershell"
+  - "git"
+  - "npm"
+  - "node"
+
+# Explicitly pin dictionaries per file type rather than relying on
+# extension auto-detection, which isn't reliable for .tf/.ps1.
+overrides:
+  - filename: "**/*.{tf,tfvars}"
+    languageId: terraform
+    dictionaries: ["terraform", "aws"]
+
+  - filename: "**/*.{sh,bash}"
+    languageId: shellscript
+    dictionaries: ["bash"]
+
+  - filename: "**/*.{ps1,psm1,psd1}"
+    languageId: powershell
+    dictionaries: ["powershell"]
+
+  - filename: ".github/workflows/*.{yml,yaml}"
+    dictionaries: ["softwareTerms", "npm", "git"]
+
+# Cut noise from things that look like words but aren't:
+# state serials, hashes, ARNs, long hex/base64 blobs.
+ignoreRegExpList:
+  - "/[a-f0-9]{32,}/gi" # md5/sha hashes
+  - "/arn:aws:[a-zA-Z0-9:/_-]+/g" # AWS ARNs
+  - "/[A-Za-z0-9+/]{40,}={0,2}/g" # base64-ish blobs
+
+words:
+  - hashicorp
+  - opentofu
+  - tfsec
+  - tflint
+  - checkov
+  - actionlint
+  - shellcheck
+  - psscriptanalyzer
+  - pwsh
+  - kubeconfig
+  - dependabot
+  - renovate
+  - codeql
+  - sops
+  - iam
+  - vpc
+  - cidr
+  - eks
+  - aks
+  - gke
+
 ignoreWords: []
-import: []
+flagWords: []
