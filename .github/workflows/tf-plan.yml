@@ -152,11 +152,10 @@ jobs:
           output-format: cli,sarif
           output-file-path: console,results.sarif
 
-      # only upload plan scans, if you wish to also upload source scans use another
-      # category name
+      # only plan scan uploaded, check.yml checkov call does not upload
       - name: Upload SARIF file
         if: ${{ github.ref == 'refs/heads/main' && github.event_name != 'pull_request' && (success() || failure()) }}
         uses: github/codeql-action/upload-sarif@v4
         with:
           sarif_file: ${{ steps.checkov.outputs.sarif-file }}
-          category: checkov
+          category: checkov-terraform
