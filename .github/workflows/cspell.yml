@@ -5,9 +5,13 @@ on:
   push:
     branches: [main]
 
+permissions: {}
+
 jobs:
   cspell:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     steps:
       - uses: actions/checkout@v7
       - uses: streetsidesoftware/cspell-action@6f3c77c1406bc930f944ba97e9801a22e42caf58 #v9.1.0
