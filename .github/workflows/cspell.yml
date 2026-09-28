@@ -12,6 +12,6 @@ jobs:
       - uses: actions/checkout@v7
       - uses: streetsidesoftware/cspell-action@6f3c77c1406bc930f944ba97e9801a22e42caf58 #v9.1.0
         with:
-          config: "cspell.yaml"
+          config: ".cspell.config.yaml"
           files: "**/*.{tf,tfvars,md,json,yml,yaml,sh,ps1,psm1}"
           incremental_files_only: true # only check files changed in the PR
