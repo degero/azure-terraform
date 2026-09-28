@@ -10,7 +10,7 @@ permissions: {}
 
 jobs:
   changed-dirs:
-    name: Detect changed Terraform dirs
+    name: Detect changed Terraform dirs (PR)
     if: ${{ github.event_name == 'pull_request' }}
     runs-on: ubuntu-latest
     permissions:
@@ -30,7 +30,7 @@ jobs:
           echo "dirs=$dirs" >> "$GITHUB_OUTPUT"
 
   checkov-terraform-pr:
-    name: Checkov Terraform (${{ matrix.dir }})
+    name: Checkov Terraform (static PR changes only)
     needs: changed-dirs
     if: ${{ needs.changed-dirs.outputs.dirs != '[]' }}
     runs-on: ubuntu-latest
