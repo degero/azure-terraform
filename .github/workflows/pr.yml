@@ -40,9 +40,7 @@ jobs:
         environment: ${{ fromJSON(vars.TF_ENVIRONMENTS) }}
     with:
       environment: ${{ matrix.environment }}
-  # If you want terraform apply to your first (lowest) env on PRs
-  apply:
-    if: ${{ vars.PR_TF_APPLY == 'true' }}
+  apply: # If you want terraform apply to your first (lowest, normally dev) env on PRs
     needs: [plan, checks]
     name: Terraform Apply
     permissions:
