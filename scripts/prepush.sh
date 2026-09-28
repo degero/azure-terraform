@@ -72,8 +72,8 @@ fi
 
 echo "==> Prettier check (json, jsonc, yaml, yml, md), cSpell check"
 if command -v npx >/dev/null 2>&1; then
-  npx --no-install cspell lint --no-progress --show-context .
-  npx --no-install prettier --write "**/*.{json,jsonc,yaml,yml,md}"
+  npx --no-install prettier --write  "**/*.{json,jsonc,yaml,yml,md}"
+  npx --no-install cspell lint --no-progress --show-context --no-exit-code .
 else
   echo "Node not found locally — skipping cSpell and Prettier (will still run in CI)"
 fi

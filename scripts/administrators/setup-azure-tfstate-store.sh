@@ -108,7 +108,7 @@ EOF
       --name "$identity_name" \
       --resource-group "$resource_group"
 
-    # alternative older Service Principal / App registration if prefered
+    # alternative older Service Principal / App registration if preferred
     # az ad app create --display-name "app-terraform"
     # # note the appId (client ID) and the app object id
     # $assignee = "" # the appid

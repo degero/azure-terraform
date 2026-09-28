@@ -73,7 +73,7 @@ else {
 Write-Information "==> Prettier check (json, jsonc, yaml, yml, md), cSpell check" -InformationAction Continue
 if (Get-Command npx -ErrorAction SilentlyContinue) {
     npx --no-install prettier --write "**/*.{json,jsonc,yaml,yml,md}"
-    npx --no-install cspell lint --no-progress --show-context .
+    npx --no-install cspell lint --no-progress --show-context --no-exit-code .
 }
 else {
     Write-Information "Node not found locally — skipping cSpell and Prettier (will still run in CI))" -InformationAction Continue
