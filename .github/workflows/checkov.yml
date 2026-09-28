@@ -1,0 +1,69 @@
+name: Checkov # Plan-based scan lives in tf-apply.yml; this covers static HCL only
+
+on:
+  workflow_call:
+  workflow_dispatch:
+  schedule:
+    - cron: "0 6 * * 1" # every Monday 06:00 UTC
+
+permissions: {}
+
+jobs:
+  changed-dirs:
+    name: Checkov Terraform (static) - Detect dirs
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    outputs:
+      dirs: ${{ steps.dirs.outputs.dirs }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+      - name: Build directory list
+        id: dirs
+        env:
+          EVENT: ${{ github.event_name }}
+          REF: ${{ github.ref }}
+        run: |
+          if [ "$EVENT" = "pull_request" ]; then
+            dirs=$(git diff --name-only --diff-filter=d origin/main...HEAD -- '*.tf' \
+              | xargs -r -n1 dirname | sort -u \
+              | jq -R -s -c 'split("\n") | map(select(length > 0))')
+          elif [ "$REF" = "refs/heads/main" ]; then
+            dirs='["./"]'
+          else
+            dirs='[]'
+          fi
+          echo "dirs=$dirs" >> "$GITHUB_OUTPUT"
+
+  checkov-terraform:
+    name: Checkov Terraform (static)
+    needs: changed-dirs
+    if: ${{ needs.changed-dirs.outputs.dirs != '[]' }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      security-events: write
+    strategy:
+      fail-fast: false
+      matrix:
+        dir: ${{ fromJson(needs.changed-dirs.outputs.dirs) }}
+    steps:
+      - uses: actions/checkout@v7
+      - name: Checkov Terraform (static, ${{ matrix.dir }})
+        id: checkov
+        uses: ./.github/actions/checkov
+        with:
+          directory: ${{ matrix.dir }}
+          framework: terraform
+          soft_fail: false
+          output_format: ${{ github.event_name == 'pull_request' && 'cli' || 'cli,sarif' }}
+          output_file_path: ${{ github.event_name == 'pull_request' && 'console' || 'console,results.sarif' }}
+
+      - name: Upload SARIF file
+        if: ${{ github.event_name != 'pull_request' && (success() || failure()) }}
+        uses: github/codeql-action/upload-sarif@v4
+        with:
+          sarif_file: ${{ steps.checkov.outputs.sarif_file }}
+          category: checkov-terraform-static

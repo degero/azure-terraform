@@ -29,6 +29,8 @@ jobs:
       WORKING_DIR: ./environments/${{ inputs.environment }}
       TFPLAN_STORAGE_ACCOUNT: ${{ vars.TF_PLAN_STORAGE_ACCOUNT }}
       TF_INPUT: 0
+      TF_VAR_ci_run: "true"
+
     steps:
       - uses: actions/checkout@v7
       - uses: ./.github/actions/tf-init

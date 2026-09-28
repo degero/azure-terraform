@@ -28,6 +28,5 @@ jobs:
         with:
           working_directory: ${{ env.WORKING_DIR }}
           no_backend: "true"
-      - name: Terraform Validate
-        working-directory: ${{ env.WORKING_DIR }}
+      - working-directory: ${{ env.WORKING_DIR }}
         run: terraform validate

@@ -42,22 +42,21 @@ set +a
 : "${AZURE_SUBSCRIPTION_ID:?AZURE_SUBSCRIPTION_ID is not set in .env}"
 : "${TFPLAN_STORAGE_ACCOUNTS:?TFPLAN_STORAGE_ACCOUNTS is not set in .env}"
 
-
-read -ra all_envs <<< "$ENVS"
-read -ra repos <<< "$GITHUB_REPOS"
-read -ra tfplan_accounts <<< "$TFPLAN_STORAGE_ACCOUNTS"
+read -ra all_envs <<<"$ENVS"
+read -ra repos <<<"$GITHUB_REPOS"
+read -ra tfplan_accounts <<<"$TFPLAN_STORAGE_ACCOUNTS"
 
 new_envs=("$@")
 
 if [[ ${#new_envs[@]} -gt 0 ]]; then
   for env in "${new_envs[@]}"; do
-    if [[ " ${all_envs[*]} " =~ " ${env} " ]]; then
+    if [[ " ${all_envs[*]} " == *" ${env} "* ]]; then
       echo "Error: '$env' already exists in .env's ENVS. Nothing to append." >&2
       exit 1
     fi
   done
 
-  if [[ $(( ${#all_envs[@]} + ${#new_envs[@]} )) -gt 8 ]]; then
+  if [[ $((${#all_envs[@]} + ${#new_envs[@]})) -gt 8 ]]; then
     echo "Error: ENVS max length is 8 (.env comment) — refusing to append." >&2
     exit 1
   fi

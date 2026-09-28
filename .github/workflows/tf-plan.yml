@@ -34,6 +34,7 @@ jobs:
       WORKING_DIR: ./environments/${{ inputs.environment }}
       TFPLAN_STORAGE_ACCOUNT: ${{ vars.TF_PLAN_STORAGE_ACCOUNT }}
       TF_INPUT: 0
+      TF_VAR_ci_run: "true"
 
     steps:
       - uses: actions/checkout@v7
@@ -134,21 +135,21 @@ jobs:
             --file tfplan \
             --overwrite
 
-      - name: Checkov Terraform (tfplan) # Only scan plan on main workflow not PR
+      - name: Checkov Terraform (tfplan)
         id: checkov
-        uses: ./.github/actions/checkov
+        uses: ./.github/actions/checkov # Only scan plan on main workflow not PR
         if: ${{ github.ref == 'refs/heads/main' && github.event_name != 'pull_request' }}
         with:
           file: ${{ env.WORKING_DIR }}/tfplan.json
           framework: terraform_plan
           soft_fail: false
-          output-format: cli,sarif
-          output-file-path: console,results.sarif
+          output_format: cli,sarif
+          output_file_path: console,results.sarif
 
       # only plan scan uploaded, check.yml checkov call does not upload
       - name: Upload SARIF file
         if: ${{ github.ref == 'refs/heads/main' && github.event_name != 'pull_request' && (success() || failure()) }}
         uses: github/codeql-action/upload-sarif@v4
         with:
-          sarif_file: ${{ steps.checkov.outputs.sarif-file }}
-          category: checkov-terraform
+          sarif_file: ${{ steps.checkov.outputs.sarif_file }}
+          category: checkov-terraform-${{ env.ENVIRONMENT}}
