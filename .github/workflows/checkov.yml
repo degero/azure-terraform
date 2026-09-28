@@ -9,25 +9,55 @@ on:
 permissions: {}
 
 jobs:
+  changed-dirs:
+    name: Detect changed Terraform dirs
+    if: ${{ github.event_name == 'pull_request' }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    outputs:
+      dirs: ${{ steps.changed.outputs.dirs }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+      - name: Get changed Terraform dirs
+        id: changed
+        run: |
+          dirs=$(git diff --name-only origin/main...HEAD -- '*.tf' \
+            | xargs -r -n1 dirname | sort -u \
+            | jq -R -s -c 'split("\n") | map(select(length > 0))')
+          echo "dirs=$dirs" >> "$GITHUB_OUTPUT"
+
+  checkov-terraform-pr:
+    name: Checkov Terraform (${{ matrix.dir }})
+    needs: changed-dirs
+    if: ${{ needs.changed-dirs.outputs.dirs != '[]' }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    strategy:
+      fail-fast: false
+      matrix:
+        dir: ${{ fromJson(needs.changed-dirs.outputs.dirs) }}
+    steps:
+      - uses: actions/checkout@v7
+      - uses: ./.github/actions/checkov
+        with:
+          directory: ${{ matrix.dir }}
+          framework: terraform
+          soft_fail: false
+
   checkov-terraform-static:
-    name: Checkov Terraform (static)
+    name: Checkov Terraform (static, full repo)
+    if: ${{ github.ref == 'refs/heads/main' && github.event_name != 'pull_request' }}
     runs-on: ubuntu-latest
     permissions:
       contents: read
       security-events: write
     steps:
       - uses: actions/checkout@v7
-        with:
-          fetch-depth: 0
-      - name: Checkov Terraform (static PR)
-        if: ${{ github.event_name == 'pull_request' && steps.changed.outputs.dirs != '' }}
-        uses: ./.github/actions/checkov
-        with:
-          directory: ./
-          framework: terraform
-          soft_fail: false
       - name: Checkov Terraform (static)
-        if: ${{ github.ref == 'refs/heads/main' && github.event_name != 'pull_request' }}
         id: checkov
         uses: ./.github/actions/checkov
         with:
@@ -36,8 +66,8 @@ jobs:
           soft_fail: false
           output_format: cli,sarif
           output_file_path: console,results.sarif
-      - name: Upload SARIF file (static full repo scan)
-        if: ${{ github.ref == 'refs/heads/main' && github.event_name != 'pull_request' && (success() || failure()) }}
+      - name: Upload SARIF file
+        if: ${{ success() || failure() }}
         uses: github/codeql-action/upload-sarif@v4
         with:
           sarif_file: ${{ steps.checkov.outputs.sarif_file }}
