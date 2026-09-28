@@ -33,8 +33,7 @@ jobs:
       contents: read
       pull-requests: write
       security-events: write
-    uses: ./.github/workflows/tf-plan.yml
-    # uses: degero/azure-terraform/.github/workflows/tf-plan.yml@main
+    uses: degero/azure-terraform/.github/workflows/tf-plan.yml@main
     strategy:
       max-parallel: 1
       matrix:
