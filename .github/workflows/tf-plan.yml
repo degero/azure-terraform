@@ -85,7 +85,7 @@ jobs:
         uses: marocchino/sticky-pull-request-comment@5770ad5eb8f42dd2c4f34da00c94c5381e49af88 #v3.0.5
         with:
           header: "terraform-plan-marocchino-${{ env.ENVIRONMENT}}"
-          message: "<h2>🧪 Terraform Plan — ${{ inputs.environment }}</h2> {{{content}}}"
+          message: "## 🧪 Terraform Plan — ${{ inputs.environment }} {{{content}}}"
           path: ${{ env.WORKING_DIR }}/plan_summary.md
 
       # Neither action above has anything to parse when `terraform plan` fails
