@@ -9,6 +9,15 @@ locals {
 
 }
 
+resource "terraform_data" "guard_default_workspace" {
+  lifecycle {
+    precondition {
+      condition     = terraform.workspace != "default" || var.ci_run
+      error_message = "The 'default' workspace is owned by CICD. Use your own workspace (terraform workspace new <name>)."
+    }
+  }
+}
+
 module "naming" {
   source = "../../modules/core/naming"
 

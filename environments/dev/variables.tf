@@ -19,3 +19,9 @@ variable "tags" {
   type        = map(string)
   default     = {}
 }
+
+variable "ci_run" {
+  type        = bool
+  default     = false
+  description = "Set to true by the CICD pipeline only."
+}
