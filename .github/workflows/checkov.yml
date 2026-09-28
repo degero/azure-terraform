@@ -10,7 +10,7 @@ permissions: {}
 
 jobs:
   changed-dirs:
-    name: Detect dirs for Checkov scan
+    name: Checkov Terraform (static) - Detect dirs
     runs-on: ubuntu-latest
     permissions:
       contents: read
