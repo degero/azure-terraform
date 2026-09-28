@@ -87,8 +87,8 @@ jobs:
           header: "terraform-plan-marocchino-${{ env.ENVIRONMENT}}"
           path: ${{ env.WORKING_DIR }}/plan_summary.md
 
+      # Alternate Plan comment if preferred
       # - name: PR comment (borchero)
-      #   if: vars.USE_ALTERNATE_PR_COMMENT == 'false' && always() && github.event_name == 'pull_request' && steps.plan.outcome == 'success'
       #   uses: borchero/terraform-plan-comment@v2
       #   with:
       #     token: ${{ secrets.GITHUB_TOKEN }}
