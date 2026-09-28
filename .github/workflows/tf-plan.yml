@@ -81,14 +81,14 @@ jobs:
           ' tfplan.json > plan_summary.md
 
       - name: PR comment (marocchino)
-        if: ${{ vars.USE_ALTERNATE_PR_COMMENT }} == 'true' && always() && github.event_name == 'pull_request' && steps.plan.outcome == 'success'
+        if: vars.USE_ALTERNATE_PR_COMMENT == 'true' && always() && github.event_name == 'pull_request' && steps.plan.outcome == 'success'
         uses: marocchino/sticky-pull-request-comment@v2
         with:
           header: "terraform-plan-marocchino-${{ inputs.environment }}"
           path: ${{ env.WORKING_DIR }}/plan_summary.md
 
       - name: PR comment (borchero)
-        if: ${{ vars.USE_ALTERNATE_PR_COMMENT }} == 'false' && always() && github.event_name == 'pull_request' && steps.plan.outcome == 'success'
+        if: vars.USE_ALTERNATE_PR_COMMENT == 'false' && always() && github.event_name == 'pull_request' && steps.plan.outcome == 'success'
         uses: borchero/terraform-plan-comment@v2
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
