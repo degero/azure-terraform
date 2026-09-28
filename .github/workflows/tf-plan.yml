@@ -85,6 +85,7 @@ jobs:
         uses: marocchino/sticky-pull-request-comment@v2
         with:
           header: "terraform-plan-marocchino-${{ env.ENVIRONMENT}}"
+          message: "<h2>Terraform Plan - ${{ env.ENVIRONMENT}}</h2> {{{content}}}"
           path: ${{ env.WORKING_DIR }}/plan_summary.md
 
       # Alternate Plan comment if preferred
