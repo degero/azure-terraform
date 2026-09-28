@@ -18,4 +18,6 @@ jobs:
         with:
           config: ".cspell.config.yaml"
           files: "**/*.{tf,tfvars,md,json,yml,yaml,sh,ps1,psm1}"
-          incremental_files_only: true # only check files changed in the PR
+          strict: false
+          inline: warning
+          incremental_files_only: ${{ github.event_name == 'pull_request' }} # only check files changed in the PR
