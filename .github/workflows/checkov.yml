@@ -19,17 +19,11 @@ jobs:
       - uses: actions/checkout@v7
         with:
           fetch-depth: 0
-      - name: Get changed Terraform dirs (for PR changes scan)
-        if: ${{ github.event_name == 'pull_request' }}
-        id: changed
-        run: |
-          dirs=$(git diff --name-only origin/main...HEAD -- '*.tf' | xargs -n1 dirname | sort -u)
-          echo "dirs=$dirs" >> "$GITHUB_OUTPUT"
-      - name: Checkov Terraform (static, PR changes only)
+      - name: Checkov Terraform (static PR)
         if: ${{ github.event_name == 'pull_request' && steps.changed.outputs.dirs != '' }}
         uses: ./.github/actions/checkov
         with:
-          directory: ${{ steps.changed.outputs.dirs }}
+          directory: ./
           framework: terraform
           soft_fail: false
       - name: Checkov Terraform (static)
