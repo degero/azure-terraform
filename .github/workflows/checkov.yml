@@ -1,6 +1,16 @@
+name: Checkov (terraform) # Plan-based scan lives in tf-apply.yml; this covers static HCL only
+
+on:
+  workflow_call:
+  workflow_dispatch:
+  schedule:
+    - cron: "0 6 * * 1" # every Monday 06:00 UTC
+
+permissions: {}
+
 jobs:
   changed-dirs:
-    name: Detect Terraform dirs
+    name: Detect dirs for Checkov scan
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -28,7 +38,7 @@ jobs:
           echo "dirs=$dirs" >> "$GITHUB_OUTPUT"
 
   checkov-terraform:
-    name: Checkov Terraform (${{ matrix.dir }})
+    name: Checkov Terraform (static)
     needs: changed-dirs
     if: ${{ needs.changed-dirs.outputs.dirs != '[]' }}
     runs-on: ubuntu-latest
@@ -41,8 +51,7 @@ jobs:
         dir: ${{ fromJson(needs.changed-dirs.outputs.dirs) }}
     steps:
       - uses: actions/checkout@v7
-
-      - name: Checkov Terraform (static)
+      - name: Checkov Terraform (static, ${{ matrix.dir }})
         id: checkov
         uses: ./.github/actions/checkov
         with:
