@@ -22,6 +22,6 @@ variable "tags" {
 
 variable "ci_run" {
   type        = bool
-  default     = false
+  default     = true
   description = "Set to true by the CICD pipeline only."
 }
