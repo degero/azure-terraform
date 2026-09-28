@@ -93,7 +93,7 @@ NOTE: If state storage is in a different subscription or tenant you will need ac
 (optional: the prepush check also done in CI) git config core.hooksPath .githooks
 
 cd environments/dev (and other envs needing changes)
-../../scripts/tf-init.sh/ps1 (convenience as init needs backend.hcl file)
+../../scripts/tf-init.sh/ps1 (convenience item as first init needs backend.hcl file)
 
 terraform workspace new <issuenumber> (so workspace is unique)
 
