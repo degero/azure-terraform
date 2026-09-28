@@ -1,4 +1,4 @@
-name: Checkov (terraform) # Plan-based scan lives in tf-apply.yml; this covers static HCL only
+name: Checkov # Plan-based scan lives in tf-apply.yml; this covers static HCL only
 
 on:
   workflow_call:

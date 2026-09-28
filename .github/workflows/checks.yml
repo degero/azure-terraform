@@ -21,7 +21,7 @@ jobs:
     with:
       environment: ${{ matrix.environment }}
   checkov-terraform-static:
-    name: Checkov Terraform (static)
+    name: Checkov
     uses: ./.github/workflows/checkov.yml
     permissions:
       contents: read
