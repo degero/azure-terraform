@@ -26,6 +26,7 @@ jobs:
     outputs:
       plan_blob_name: ${{ steps.plan_path.outputs.plan_blob_name }}
     env:
+      ENVIRONMENT: ${{ inputs.environment }}
       ARM_CLIENT_ID: ${{ vars.AZURE_CLIENT_ID }}
       ARM_SUBSCRIPTION_ID: ${{ vars.AZURE_SUBSCRIPTION_ID }}
       ARM_TENANT_ID: ${{ vars.AZURE_TENANT_ID }}
@@ -84,8 +85,8 @@ jobs:
         if: always() && github.event_name == 'pull_request' && steps.plan.outcome == 'success'
         uses: marocchino/sticky-pull-request-comment@5770ad5eb8f42dd2c4f34da00c94c5381e49af88 #v3.0.5
         with:
-          header: "terraform-plan-marocchino-${{ env.ENVIRONMENT}}"
-          message: "## 🧪 Terraform Plan — ${{ inputs.environment }} {{{content}}}"
+          header: "terraform-plan-marocchino-${{ env.ENVIRONMENT }}"
+          message: "## 🧪 Terraform Plan — Environment: ${{ env.ENVIRONMENT }}<br>{{{content}}}"
           path: ${{ env.WORKING_DIR }}/plan_summary.md
 
       # Neither action above has anything to parse when `terraform plan` fails
@@ -97,10 +98,10 @@ jobs:
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
-            const marker = `<!-- terraform-plan-comment: ${{ env.ENVIRONMENT}} -->`;
+            const marker = `<!-- terraform-plan-comment: ${{ env.ENVIRONMENT }} -->`;
             const raw = process.env.TFPLAN_RAW || '';
             const tail = raw.split('\n').slice(-40).join('\n');
-            const body = `${marker}\n## ❌ Terraform Plan failed — \`${{ env.ENVIRONMENT}}\`\n\n\`\`\`\n${tail}\n\`\`\`\n\n<sub>Run: [${context.runId}](${context.payload.repository.html_url}/actions/runs/${context.runId})</sub>`;
+            const body = `${marker}\n## ❌ Terraform Plan failed — \`${{ env.ENVIRONMENT }}\`\n\n\`\`\`\n${tail}\n\`\`\`\n\n<sub>Run: [${context.runId}](${context.payload.repository.html_url}/actions/runs/${context.runId})</sub>`;
 
             const { data: comments } = await github.rest.issues.listComments({
               owner: context.repo.owner,
