@@ -80,22 +80,13 @@ jobs:
                else ($changes[] | "- \(sym(.change.actions)) `\(.address)`") end)
           ' tfplan.json > plan_summary.md
 
-      - name: PR comment (marocchino)
+      - name: PR comment
         if: always() && github.event_name == 'pull_request' && steps.plan.outcome == 'success'
-        uses: marocchino/sticky-pull-request-comment@v2
+        uses: marocchino/sticky-pull-request-comment@5770ad5eb8f42dd2c4f34da00c94c5381e49af88 #v3.0.5
         with:
           header: "terraform-plan-marocchino-${{ env.ENVIRONMENT}}"
-          message: "<h2>Terraform Plan - ${{ env.ENVIRONMENT}}</h2> {{{content}}}"
+          message: "<h2>🧪 Terraform Plan — ${{ inputs.environment }}</h2> {{{content}}}"
           path: ${{ env.WORKING_DIR }}/plan_summary.md
-
-      # Alternate Plan comment if preferred
-      # - name: PR comment (borchero)
-      #   uses: borchero/terraform-plan-comment@v2
-      #   with:
-      #     token: ${{ secrets.GITHUB_TOKEN }}
-      #     planfile: tfplan
-      #     working-directory: ${{ env.WORKING_DIR }}
-      #     header: "🧪 Terraform Plan (borchero) — ${{ inputs.environment }}"
 
       # Neither action above has anything to parse when `terraform plan` fails
       - name: PR comment on plan failure
