@@ -92,7 +92,7 @@ NOTE: If state storage is in a different subscription or tenant you will need ac
 ```bash
 (optional: the prepush check also done in CI) git config core.hooksPath .githooks
 
-Set an env var "TF_PLUGIN_CACHE_DIR"
+If you wish to run local plan runs on higher envs, set an env var "TF_PLUGIN_CACHE_DIR" for a common cache location
 
 cd environments/dev (and other envs needing changes)
 ../../scripts/tf-init.sh/ps1 (convenience item as first init needs backend.hcl file)
