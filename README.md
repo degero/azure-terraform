@@ -114,6 +114,8 @@ terraform workspace delete <issuenumber>
 
 It is recommended to use a workspace for local dev to not interfere with the tfstate used by CI or other devs.
 
+It is recommended to setup a TF_PLUGIN_CACHE_DIR env var.
+
 ## Admin Setup
 
 ### Github Setup
@@ -167,7 +169,7 @@ modulegroups/ ← composite modules (patterns of primitives)
 └─── function-app-order-process.tf # calls modules/compute/functionapp + modules/storage/account
 
 environments/
-├── dev/
+├── dev(test,stage,prod,etc)/
 │ ├── terraform.tfvars
 │ ├── backend.hcl
 │ └── main.tf # root module for ENV calls modules/, and compositions/ etc.

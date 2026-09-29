@@ -10,7 +10,7 @@ permissions: {}
 
 jobs:
   terraform-validate:
-    name: Terraform Validate
+    name: Validate
     permissions:
       contents: read
       actions: read # for private repo
@@ -21,12 +21,13 @@ jobs:
     with:
       environment: ${{ matrix.environment }}
   terraform-test:
+    name: Test
     uses: ./.github/workflows/tf-unit-test.yml
     permissions:
       contents: read
       pull-requests: write # For test reports
   checkov-terraform-static:
-    name: Checkov
+    name: Sec
     uses: ./.github/workflows/checkov.yml
     permissions:
       contents: read
