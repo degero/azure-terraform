@@ -20,8 +20,16 @@ jobs:
       - run: mkdir -p "$TF_PLUGIN_CACHE_DIR"
       - name: Terraform unit tests
         run: bash scripts/tf-unit-test.sh true"
-      - name: Publish Terraform test report
+      - name: Upload test reports
         if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: terraform-test-reports
+          path: |
+            modules/**/results.xml
+            modulegroups/**/results.xml
+      - name: Publish Terraform test report
+        if: ${{ always() && github.event_name == 'pull_request' }}
         uses: mikepenz/action-junit-report@a9170d5795813c01ab4901ffb045b52bab4ab09d #v6.5.0
         with:
           report_paths: |
