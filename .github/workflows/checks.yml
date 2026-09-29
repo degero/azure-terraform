@@ -25,6 +25,7 @@ jobs:
     uses: ./.github/workflows/tf-unit-test.yml
     permissions:
       contents: read
+      pull-requests: write # For test reports
   checkov-terraform-static:
     name: Checkov
     uses: ./.github/workflows/checkov.yml
