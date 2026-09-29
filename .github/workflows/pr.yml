@@ -26,27 +26,27 @@ jobs:
       security-events: write
     uses: ./.github/workflows/checks.yml
 
-  plan:
-    name: Terraform Plan
-    permissions:
-      id-token: write
-      contents: read
-      pull-requests: write
-      security-events: write
-    uses: degero/azure-terraform/.github/workflows/tf-plan.yml@main
-    strategy:
-      max-parallel: 1
-      matrix:
-        environment: ${{ fromJSON(vars.TF_ENVIRONMENTS) }}
-    with:
-      environment: ${{ matrix.environment }}
-  apply: # If you want terraform apply to your first (lowest, normally dev) env on PRs
-    needs: [plan, checks]
-    name: Terraform Apply
-    permissions:
-      contents: read
-      id-token: write
-    uses: degero/azure-terraform/.github/workflows/tf-apply.yml@main
-    with:
-      environment: ${{ fromJSON(vars.TF_ENVIRONMENTS)[0] }} #tf-plan.yml has plan_blob_name but using this deterministic for parallel changes
-      plan_blob_name: ${{ github.repository }}/${{ fromJSON(vars.TF_ENVIRONMENTS)[0] }}/${{ github.run_id }}-${{ github.run_attempt }}/tfplan
+  # plan:
+  #   name: Terraform Plan
+  #   permissions:
+  #     id-token: write
+  #     contents: read
+  #     pull-requests: write
+  #     security-events: write
+  #   uses: degero/azure-terraform/.github/workflows/tf-plan.yml@main
+  #   strategy:
+  #     max-parallel: 1
+  #     matrix:
+  #       environment: ${{ fromJSON(vars.TF_ENVIRONMENTS) }}
+  #   with:
+  #     environment: ${{ matrix.environment }}
+  # apply: # If you want terraform apply to your first (lowest, normally dev) env on PRs
+  #   needs: [plan, checks]
+  #   name: Terraform Apply
+  #   permissions:
+  #     contents: read
+  #     id-token: write
+  #   uses: degero/azure-terraform/.github/workflows/tf-apply.yml@main
+  #   with:
+  #     environment: ${{ fromJSON(vars.TF_ENVIRONMENTS)[0] }} #tf-plan.yml has plan_blob_name but using this deterministic for parallel changes
+  #     plan_blob_name: ${{ github.repository }}/${{ fromJSON(vars.TF_ENVIRONMENTS)[0] }}/${{ github.run_id }}-${{ github.run_attempt }}/tfplan

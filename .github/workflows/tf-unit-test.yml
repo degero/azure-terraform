@@ -1,19 +1,33 @@
-name: Terraform Unit Tests
-
 on:
   workflow_dispatch:
-  workflow_call:
+    inputs:
+      generate_report:
+        description: "Generate JUnit test report"
+        type: boolean
+        default: false
+  pull_request:
 
 permissions: {}
 
 jobs:
   terraform-unit-tests:
-    name: Terraform Unit Tests
+    runs-on: ubuntu-latest
     permissions:
       contents: read
-    runs-on: ubuntu-latest
+      pull-requests: write
+    env:
+      TF_IN_AUTOMATION: "true"
+      TF_PLUGIN_CACHE_DIR: ${{ github.workspace }}/.terraform-cache
     steps:
       - uses: actions/checkout@v7
       - uses: ./.github/actions/tf-setup
-      - name: Terraform Test
-        run: terraform test
+      - run: mkdir -p "$TF_PLUGIN_CACHE_DIR"
+      - name: Terraform unit tests
+        run: bash scripts/tf-unit-test.sh true"
+      - name: Publish Terraform test report
+        if: always()
+        uses: mikepenz/action-junit-report@a9170d5795813c01ab4901ffb045b52bab4ab09d #v6.5.0
+        with:
+          report_paths: |
+            modules/**/results.xml
+            modulegroups/**/results.xml
