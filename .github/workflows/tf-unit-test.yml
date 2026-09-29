@@ -1,11 +1,7 @@
+name: Terraform Unit tests
+
 on:
-  workflow_dispatch:
-    inputs:
-      generate_report:
-        description: "Generate JUnit test report"
-        type: boolean
-        default: false
-  pull_request:
+  workflow_call:
 
 permissions: {}
 
