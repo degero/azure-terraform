@@ -21,7 +21,6 @@ jobs:
     with:
       environment: ${{ matrix.environment }}
   terraform-test:
-    name: Terraform Test
     uses: ./.github/workflows/tf-unit-test.yml
     permissions:
       contents: read

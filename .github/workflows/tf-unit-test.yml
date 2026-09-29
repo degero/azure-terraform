@@ -1,4 +1,4 @@
-name: Terraform Unit tests
+name: Terraform Unit Tests
 
 on:
   workflow_call:
@@ -7,7 +7,7 @@ permissions: {}
 
 jobs:
   terraform-unit-tests:
-    name: Terraform Unit tests
+    name: Terraform Unit Tests
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -20,7 +20,7 @@ jobs:
       - uses: ./.github/actions/tf-setup
       - run: mkdir -p "$TF_PLUGIN_CACHE_DIR"
       - name: Terraform unit tests
-        run: bash scripts/tf-unit-test.sh 'true'"
+        run: bash scripts/tf-unit-test.sh true
       - name: Upload test reports
         if: always()
         uses: actions/upload-artifact@v4
