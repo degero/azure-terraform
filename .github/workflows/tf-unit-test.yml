@@ -14,3 +14,6 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
+      - uses: ./.github/actions/tf-setup
+      - name: Terraform Test
+        run: terraform test

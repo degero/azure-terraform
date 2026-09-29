@@ -33,6 +33,7 @@ jobs:
 
     steps:
       - uses: actions/checkout@v7
+      - uses: ./.github/actions/tf-setup
       - uses: ./.github/actions/tf-init
         with:
           working_directory: ${{ env.WORKING_DIR }}
