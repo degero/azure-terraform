@@ -29,17 +29,17 @@ module "rg" {
   source = "../../modules/core/rg"
 
   name     = module.naming.all.resource_group.name
-  location = var.location
+  location = var.location 
 
   tags = local.common_tags
 }
 
 module "storage" {
-  source = "../../modules/storage"
+  source = "../../modules/storage/account"
 
-  name                = module.naming.all.storage_account.name
-  resource_group_name = module.rg.resource_id
-  location            = var.location
+  name      = module.naming.all.storage_account.name
+  parent_id = module.rg.resource_id
+  location  = var.location
 
   tags = local.common_tags
 }

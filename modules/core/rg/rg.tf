@@ -14,6 +14,15 @@ variable "tags" {
   default     = {}
 }
 
+terraform {
+  required_providers {
+    azapi   = { source = "Azure/azapi" }
+    modtm   = { source = "Azure/modtm" }
+    random  = { source = "hashicorp/random" }
+    azurerm = { source = "hashicorp/azurerm" }
+  }
+}
+
 module "this" {
   # version 0.4.0
   source = "github.com/Azure/terraform-azurerm-avm-res-resources-resourcegroup?ref=2c605230f1bcb5dc29a667f2a43258bfa9140c32"
