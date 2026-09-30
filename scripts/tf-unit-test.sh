@@ -17,6 +17,6 @@ while IFS= read -r dir; do
   terraform -chdir="$dir" init -backend=false -input=false || rc=1
   terraform -chdir="$dir" test "${test_args[@]}" || rc=1
   echo "::endgroup::"
-done < <(find modules modulegroups -name '*.tftest.hcl' -not -path '*/.terraform/*' -exec dirname {} \; | sort -u)
+done < <(find modules modulegroups tests -name '*.tftest.hcl' -not -path '*/.terraform/*' -exec dirname {} \; | sort -u)
 
 exit $rc

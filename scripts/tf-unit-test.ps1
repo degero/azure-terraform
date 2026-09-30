@@ -2,7 +2,7 @@
 # scripts/tf-unit-test.ps1
 [CmdletBinding()]
 param(
-    [string[]]$Path = @('modules', 'modulegroups')
+    [string[]]$Path = @('modules', 'modulegroups', 'tests')
 )
 
 $ErrorActionPreference = 'Continue'

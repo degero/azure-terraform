@@ -152,7 +152,7 @@ Recommended for higher environments:
 
 You could adopt components of the /bootstrap of [azure-samples/github-terraform-oidc-ci-cd](https://github.com/azure-samples/github-terraform-oidc-ci-cd) to implement these note however tfstate is only separated by container.
 
-modules/ ← atomic modules only (one resource type each)
+modules/ ← atomic modules only (one resource type each + unit test file)
 ├── compute/
 │ ├── functionapp/functionapp.tf
 │ └── vm/vm.tf
@@ -162,17 +162,19 @@ modules/ ← atomic modules only (one resource type each)
 │ ├── vnet/vnet.tf
 │ └── subnet/subnet.tf
 ├── secrets/
-│ └── keyvault/storageaccount.tf
+│ └── keyvault/keyvault.tf
 
 modulegroups/ ← composite modules (patterns of primitives)
 ├── function-app-order-process/
 └─── function-app-order-process.tf # calls modules/compute/functionapp + modules/storage/account
 
-environments/
+environments/ ←
 ├── dev(test,stage,prod,etc)/
 │ ├── terraform.tfvars
 │ ├── backend.hcl
 │ └── main.tf # root module for ENV calls modules/, and compositions/ etc.
+
+tests/ (Add cross module / integration tests here)
 
 ### Azure tooling
 
