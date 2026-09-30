@@ -6,16 +6,18 @@ param(
 )
 
 $ErrorActionPreference = 'Continue'
+$InformationPreference = 'Continue'
 
-function Start-Group($name) {
-    if ($env:GITHUB_ACTIONS) { Write-Host "::group::$name" }
-    elseif ($env:TF_BUILD) { Write-Host "##[group]$name" }
-    else { Write-Host "=== $name ===" }
+function Enter-LogGroup {
+    param([string]$Name)
+    if ($env:GITHUB_ACTIONS) { Write-Information "::group::$Name" }
+    elseif ($env:TF_BUILD) { Write-Information "##[group]$Name" }
+    else { Write-Information "=== $Name ===" }
 }
 
-function Stop-Group {
-    if ($env:GITHUB_ACTIONS) { Write-Host "::endgroup::" }
-    elseif ($env:TF_BUILD) { Write-Host "##[endgroup]" }
+function Exit-LogGroup {
+    if ($env:GITHUB_ACTIONS) { Write-Information "::endgroup::" }
+    elseif ($env:TF_BUILD) { Write-Information "##[endgroup]" }
 }
 
 $moduleDirs = Get-ChildItem -Path $Path -Recurse -Filter '*.tftest.hcl' -File |
@@ -31,7 +33,7 @@ ForEach-Object {
 Sort-Object -Unique
 
 if (-not $moduleDirs) {
-    Write-Host "No *.tftest.hcl files found under: $($Path -join ', ')"
+    Write-Information "No *.tftest.hcl files found under: $($Path -join ', ')"
     exit 0
 }
 
@@ -39,7 +41,7 @@ $failed = @()
 
 foreach ($dir in $moduleDirs) {
     $label = Resolve-Path -Path $dir -Relative
-    Start-Group $label
+    Enter-LogGroup $label
 
     terraform -chdir="$dir" init -backend=false -input=false
     if ($LASTEXITCODE -ne 0) {
@@ -50,15 +52,15 @@ foreach ($dir in $moduleDirs) {
         if ($LASTEXITCODE -ne 0) { $failed += "$label (test)" }
     }
 
-    Stop-Group
+    Exit-LogGroup
 }
 
 if ($failed.Count -gt 0) {
-    Write-Host ""
-    Write-Host "Failed:" -ForegroundColor Red
-    $failed | ForEach-Object { Write-Host "  $_" -ForegroundColor Red }
+    Write-Information ""
+    Write-Information "Failed:"
+    $failed | ForEach-Object { Write-Information "  $_" }
     exit 1
 }
 
-Write-Host "All module tests passed." -ForegroundColor Green
+Write-Information "All module tests passed."
 exit 0
