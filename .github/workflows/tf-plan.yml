@@ -26,6 +26,8 @@ jobs:
     outputs:
       plan_blob_name: ${{ steps.plan_path.outputs.plan_blob_name }}
     env:
+      TF_IN_AUTOMATION: "true"
+      TF_PLUGIN_CACHE_DIR: ${{ github.workspace }}/.terraform-cache
       ENVIRONMENT: ${{ inputs.environment }}
       ARM_CLIENT_ID: ${{ vars.AZURE_CLIENT_ID }}
       ARM_SUBSCRIPTION_ID: ${{ vars.AZURE_SUBSCRIPTION_ID }}

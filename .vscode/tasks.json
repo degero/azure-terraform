@@ -1,0 +1,76 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "terraform test: all modules",
+      "type": "process",
+      "command": "bash",
+      "args": ["${workspaceFolder}/scripts/tf-test.sh"],
+      "windows": {
+        "command": "pwsh",
+        "args": ["-NoProfile", "-File", "${workspaceFolder}/scripts/tf-test.ps1"]
+      },
+      "group": "test",
+      "problemMatcher": []
+    },
+    {
+      "label": "terraform test: current module",
+      "type": "shell",
+      "command": "terraform -chdir=${fileDirname} test",
+      "group": "test",
+      "problemMatcher": []
+    },
+    {
+      "label": "tf: plan (environment)",
+      "type": "process",
+      "command": "terraform",
+      "args": ["-chdir=environments/${input:env}", "plan", "-var-file=terraform.tfvars"],
+      "problemMatcher": []
+    },
+    ,
+    {
+      "label": "tf: validate (current dir)",
+      "type": "process",
+      "command": "terraform",
+      "args": ["-chdir=${fileDirname}", "validate"],
+      "problemMatcher": []
+    },
+    {
+      "label": "tf: lint (tflint)",
+      "type": "process",
+      "command": "tflint",
+      "args": ["--chdir=${fileDirname}"],
+      "problemMatcher": []
+    },
+    {
+      "label": "tf: fmt (repo)",
+      "type": "process",
+      "command": "terraform",
+      "args": ["fmt", "-recursive"],
+      "problemMatcher": []
+    },
+    {
+      "label": "tf: fmt check",
+      "type": "process",
+      "command": "terraform",
+      "args": ["fmt", "-check", "-recursive", "-diff"],
+      "problemMatcher": []
+    },
+    {
+      "label": "tf: init (current dir)",
+      "type": "process",
+      "command": "terraform",
+      "args": ["-chdir=${fileDirname}", "init", "-backend=false", "-input=false"],
+      "problemMatcher": []
+    }
+  ],
+  "inputs": [
+    {
+      "id": "env",
+      "type": "pickString",
+      "description": "Environment",
+      "options": ["dev", "test", "stage", "uat", "preprod", "prod"],
+      "default": "dev"
+    }
+  ]
+}

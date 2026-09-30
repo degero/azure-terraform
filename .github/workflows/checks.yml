@@ -9,8 +9,8 @@ on:
 permissions: {}
 
 jobs:
-  validate:
-    name: Terraform Validate
+  terraform-validate:
+    name: Validate
     permissions:
       contents: read
       actions: read # for private repo
@@ -20,8 +20,16 @@ jobs:
     uses: ./.github/workflows/tf-validate.yml
     with:
       environment: ${{ matrix.environment }}
+  terraform-test:
+    name: Test
+    uses: ./.github/workflows/tf-test.yml
+    permissions:
+      id-token: write
+      checks: write
+      contents: read
+      pull-requests: write # For test reports
   checkov-terraform-static:
-    name: Checkov
+    name: Sec
     uses: ./.github/workflows/checkov.yml
     permissions:
       contents: read
