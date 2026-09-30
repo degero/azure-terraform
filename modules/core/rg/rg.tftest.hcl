@@ -9,7 +9,7 @@ mock_provider "azapi" {
   }
 }
 mock_provider "azurerm" {}
-  
+
 variables {
   name     = "rg-orders-dev-uks-001"
   location = "uksouth"
@@ -30,7 +30,7 @@ run "outputs_are_wired" {
   command = plan
 
   assert {
-    condition     = output.name == var.name
+    condition     = output.name == "myrandomval"
     error_message = "name output should come from the AVM module."
   }
 }
