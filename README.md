@@ -12,7 +12,7 @@ This template is focused on the terraform and github cicd it is not opinionated 
 - Isolated terraform federated credentials + 2 UMAI per env (plan,apply) + RBAC to blob storage by environment (tfstate, tfplans containers)
 - TFPlan artifacts uploaded to blob storage (retention 7 days)
 - Named `/modules` files for easy location in VSCode (instead of lots of main.tf files)
-- Github Workflows with: Linting (tflint,actionlint,prettier), Formatting (terraform fmt), Sec check (checkov), Github Environments for workflow approval, Dependabot (terraform, github actions), Doco generation (terraform-docs), Terraform Validate
+- Github Workflows with: Linting (tflint,actionlint,prettier), Formatting (terraform fmt), Sec checks (checkov, Gitleaks secret scanning with PR comments and SARIF artifact), Github Environments for workflow approval, Dependabot (terraform, github actions), Doco generation (terraform-docs), Terraform Validate
 - Pre-push githook to validate/format terraform, lint (prettier,actionlint,powershell,shellscript) and checkov (if installed) locally
 - VSCode settings for format on save: markdown / yaml / json(c), powershell
 - Prettier rules for markdown / yaml / json(c)

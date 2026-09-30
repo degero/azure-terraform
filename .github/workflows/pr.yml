@@ -9,7 +9,9 @@ on:
       - "environments/**/*.hcl"
       - "modules/**/*.tf"
       - "modulegroups/**/*.tf"
-      - ".github/workflows/pr.yml"
+      - ".github/workflows/**"
+      - ".gitleaks.toml"
+      - "README.md"
 
 concurrency:
   group: terraform-plan-${{ github.event.pull_request.number }}
