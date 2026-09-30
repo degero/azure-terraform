@@ -25,6 +25,7 @@ jobs:
     uses: ./.github/workflows/tf-unit-test.yml
     permissions:
       id-token: write
+      checks: write
       contents: read
       pull-requests: write # For test reports
   checkov-terraform-static:

@@ -16,6 +16,7 @@ jobs:
     name: Checks
     permissions:
       id-token: write
+      checks: write
       contents: read
       actions: read # for private repo
       security-events: write
