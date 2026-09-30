@@ -22,7 +22,7 @@ jobs:
       environment: ${{ matrix.environment }}
   terraform-test:
     name: Test
-    uses: ./.github/workflows/tf-unit-test.yml
+    uses: ./.github/workflows/tf-test.yml
     permissions:
       id-token: write
       checks: write

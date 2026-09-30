@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
-# scripts/tf-unit-test.sh
-# Usage: tf-unit-test.sh [true|false]   (default: false)
+# scripts/tf-test.sh
+# Usage: tf-test.sh [true|false]   (default: false)
 set -uo pipefail
 
 generate_report="${1:-false}"

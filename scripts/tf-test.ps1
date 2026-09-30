@@ -1,5 +1,5 @@
 #!/usr/bin/env pwsh
-# scripts/tf-unit-test.ps1
+# scripts/tf-test.ps1
 [CmdletBinding()]
 param(
     [string[]]$Path = @('modules', 'modulegroups', 'tests')

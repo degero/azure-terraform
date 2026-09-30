@@ -5,10 +5,10 @@
       "label": "terraform test: all modules",
       "type": "process",
       "command": "bash",
-      "args": ["${workspaceFolder}/scripts/tf-unit-test.sh"],
+      "args": ["${workspaceFolder}/scripts/tf-test.sh"],
       "windows": {
         "command": "pwsh",
-        "args": ["-NoProfile", "-File", "${workspaceFolder}/scripts/tf-unit-test.ps1"]
+        "args": ["-NoProfile", "-File", "${workspaceFolder}/scripts/tf-test.ps1"]
       },
       "group": "test",
       "problemMatcher": []
