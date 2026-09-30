@@ -30,7 +30,7 @@ run "outputs_are_wired" {
   command = plan
 
   assert {
-    condition     = output.name == "myrandomval"
+    condition     = output.name == var.name
     error_message = "name output should come from the AVM module."
   }
 }
