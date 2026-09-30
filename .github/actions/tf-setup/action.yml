@@ -1,4 +1,5 @@
 name: Terraform Setup
+description: Installs terraform
 
 runs:
   using: composite

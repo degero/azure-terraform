@@ -29,7 +29,7 @@ module "rg" {
   source = "../../modules/core/rg"
 
   name     = module.naming.all.resource_group.name
-  location = var.location 
+  location = var.location
 
   tags = local.common_tags
 }
