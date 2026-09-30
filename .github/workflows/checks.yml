@@ -35,3 +35,9 @@ jobs:
       contents: read
       actions: read
       security-events: write
+  gitleaks:
+    name: Gitleaks
+    uses: ./.github/workflows/gitleaks.yml
+    permissions:
+      contents: read
+      pull-requests: write
