@@ -43,6 +43,7 @@ jobs:
         with:
           name: terraform-test-reports
           path: ${{ steps.detect.outputs.report_paths }}
+          retention-days: 1
       - name: Publish Terraform test report
         if: ${{ always() && github.event_name == 'pull_request' }}
         uses: mikepenz/action-junit-report@a9170d5795813c01ab4901ffb045b52bab4ab09d #v6.5.0
@@ -52,3 +53,5 @@ jobs:
           include_passed: true
           detailed_summary: true
           check_name: Terraform Unit Test Report
+          comment: true
+          pr_id: ${{ github.event.workflow_run.pull_requests[0].number }}
