@@ -60,8 +60,8 @@ jobs:
       environment: ${{ matrix.environment }}
 
   apply:
-    needs: [plan]
-    if: jobs.changes.outputs.terraform == 'true'
+    needs: [plan, changes]
+    if: needs.changes.outputs.terraform == 'true'
     name: Terraform Apply
     permissions:
       contents: read
