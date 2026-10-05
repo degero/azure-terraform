@@ -61,7 +61,7 @@ jobs:
 
   apply:
     needs: [plan]
-    if: needs.changes.outputs.terraform == 'true'
+    if: jobs.changes.outputs.terraform == 'true'
     name: Terraform Apply
     permissions:
       contents: read
