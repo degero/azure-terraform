@@ -7,7 +7,7 @@ permissions: {}
 
 jobs:
   gitleaks:
-    name: Secret scan
+    name: Gitleaks scan
     runs-on: ubuntu-latest
     permissions:
       contents: read
