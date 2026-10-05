@@ -30,8 +30,30 @@ jobs:
       security-events: write
       pull-requests: write # For test reports
     uses: ./.github/workflows/checks.yml
+  changes:
+    runs-on: ubuntu-latest
+    name: Terraform changed
+    outputs:
+      terraform: ${{ steps.filter.outputs.terraform }}
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v7
+      - uses: dorny/paths-filter@ceb8a2b8f2d89434be7ff52d3de7ec3738c5cc9d #v4.0.3
+        id: filter
+        with:
+          predicate-quantifier: every
+          filters: |
+            terraform:
+              - "**/*.{tf,tfvars,hcl}"
+              - "!**/tests/**"
+              - "!**/*.tftest.hcl"
+              - "!**/*.tfmock.hcl"
+              - "!**/.terraform.lock.hcl"
   plan:
     name: Terraform Plan
+    needs: [checks, changes]
+    if: needs.changes.outputs.terraform == 'true'
     permissions:
       id-token: write
       contents: read
@@ -45,7 +67,8 @@ jobs:
     with:
       environment: ${{ matrix.environment }}
   apply: # If you want terraform apply to your first (lowest, normally dev) env on PRs
-    needs: [plan, checks]
+    needs: [plan]
+    if: needs.changes.outputs.terraform == 'true'
     name: Terraform Apply
     permissions:
       contents: read

@@ -28,6 +28,7 @@ jobs:
             terraform:
               - "**.tf"
               - "**.tfvars"
+              - "backend.hcl"
               - "**/Dockerfile*"
               - "**/*.yaml"
               - "**/*.yml"
