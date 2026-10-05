@@ -41,3 +41,8 @@ jobs:
     permissions:
       contents: read
       pull-requests: write
+  trivy:
+    name: Trivy
+    uses: ./.github/workflows/trivy.yml
+    permissions:
+      contents: read
