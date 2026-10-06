@@ -155,6 +155,12 @@ jobs:
               print(f"    {src_id} --> {dst_id}")
           PYEOF
 
+      - name: Debug diagram input
+        run: |
+          echo "graph.dot lines: $(wc -l < "${{ steps.diagram_config.outputs.terraform_directory }}/graph.dot")"
+          echo "diagram.mmd lines: $(wc -l < diagram.mmd)"
+          head -n 20 diagram.mmd
+
       - name: Install mermaid-cli (mermaid engine built from mermaid-js/mermaid@main)
         run: |
           mkdir -p /tmp/mermaid-render
