@@ -56,16 +56,19 @@ jobs:
     permissions:
       contents: write
     steps:
-      - name: Checkout
-        uses: actions/checkout@v7
+      - uses: actions/checkout@v7
 
+      # `inputs.*` are empty on push events, so every value used later is
+      # resolved here (push defaults vs. dispatch/call inputs) and exposed as a step output.
       - name: Resolve diagram configuration
         id: diagram_config
         shell: bash
         env:
           TF_ENVIRONMENTS: ${{ vars.TF_ENVIRONMENTS }}
           INPUT_TERRAFORM_DIRECTORY: ${{ inputs.terraform-directory }}
+          INPUT_DOCS_PATH: ${{ inputs.docs-path }}
           INPUT_DIAGRAM_FILENAME: ${{ inputs.diagram-filename }}
+          INPUT_COMMIT_CHANGES: ${{ inputs.commit-changes }}
         run: |
           if [[ "$GITHUB_EVENT_NAME" == "push" ]]; then
             environment="$(python3 -c 'import json, os; print(json.loads(os.environ["TF_ENVIRONMENTS"])[-1])')"
@@ -74,19 +77,45 @@ jobs:
             else
               terraform_directory="environments/$environment"
             fi
+            docs_path="docs"
             diagram_filename="${environment##*/}-terraform-diagram.svg"
+            commit_changes="true"
           else
-            terraform_directory="$INPUT_TERRAFORM_DIRECTORY"
-            diagram_filename="$INPUT_DIAGRAM_FILENAME"
+            terraform_directory="${INPUT_TERRAFORM_DIRECTORY:-.}"
+            docs_path="${INPUT_DOCS_PATH:-docs}"
+            diagram_filename="${INPUT_DIAGRAM_FILENAME:-terraform-diagram.svg}"
+            commit_changes="${INPUT_COMMIT_CHANGES:-true}"
           fi
+
+          if [[ -z "$terraform_directory" ]]; then
+            echo "::error::terraform_directory resolved to an empty value. Check that the TF_ENVIRONMENTS repo variable exists and is valid JSON, e.g. [\"dev\",\"prod\"]."
+            exit 1
+          fi
+
           echo "terraform_directory=$terraform_directory" >> "$GITHUB_OUTPUT"
+          echo "docs_path=$docs_path" >> "$GITHUB_OUTPUT"
           echo "diagram_filename=$diagram_filename" >> "$GITHUB_OUTPUT"
+          echo "commit_changes=$commit_changes" >> "$GITHUB_OUTPUT"
+
+          echo "terraform_directory='$terraform_directory'"
+          echo "docs_path='$docs_path'"
+          echo "diagram_filename='$diagram_filename'"
+          echo "commit_changes='$commit_changes'"
 
       - uses: ./.github/actions/tf-setup
-      - uses: ./.github/actions/tf-init
-        with:
-          working_directory: ${{ steps.diagram_config.outputs.terraform_directory }}
-          no_backend: "true"
+
+      # `terraform graph` needs an initialized backend, so `init -backend=false` is not enough.
+      # Swap whatever backend is configured for a local one (runner-only file, never committed),
+      # so no remote state or credentials are required.
+      - name: Init Terraform with local backend override (diagram only)
+        working-directory: ${{ steps.diagram_config.outputs.terraform_directory }}
+        run: |
+          cat > backend_override.tf << 'EOF'
+          terraform {
+            backend "local" {}
+          }
+          EOF
+          terraform init -input=false
 
       - name: Generate Terraform graph (DOT)
         working-directory: ${{ steps.diagram_config.outputs.terraform_directory }}
@@ -145,17 +174,24 @@ jobs:
           npm install --no-fund --no-audit
 
       - name: Render diagram to SVG
+        env:
+          DOCS_PATH: ${{ steps.diagram_config.outputs.docs_path }}
+          DIAGRAM_FILENAME: ${{ steps.diagram_config.outputs.diagram_filename }}
         run: |
-          mkdir -p "${{ inputs.docs-path }}"
+          mkdir -p "$DOCS_PATH"
           /tmp/mermaid-render/node_modules/.bin/mmdc \
             -i diagram.mmd \
-            -o "${{ inputs.docs-path }}/${{ steps.diagram_config.outputs.diagram_filename }}" \
+            -o "$DOCS_PATH/$DIAGRAM_FILENAME" \
             -b transparent
 
       - name: Ensure README references the diagram
+        env:
+          DOCS_PATH: ${{ steps.diagram_config.outputs.docs_path }}
+          DIAGRAM_FILENAME: ${{ steps.diagram_config.outputs.diagram_filename }}
         run: |
-          README="${{ inputs.docs-path }}/README.md"
-          DOC_LINK="/${{ steps.diagram_config.outputs.diagram_filename }}"
+          README="$DOCS_PATH/README.md"
+          # README sits next to the SVG, so link relatively
+          DOC_LINK="./$DIAGRAM_FILENAME"
           MARKER="<!-- terraform-diagram:start -->"
 
           [ -f "$README" ] || touch "$README"
@@ -171,15 +207,18 @@ jobs:
               echo "![Terraform diagram]($DOC_LINK)"
               echo "<!-- terraform-diagram:end -->"
             } >> "$README"
-            echo "Injected diagram reference into README.md"
+            echo "Injected diagram reference into $README"
           fi
 
       - name: Commit changes
-        if: ${{ inputs.commit-changes }}
+        if: ${{ steps.diagram_config.outputs.commit_changes == 'true' }}
+        env:
+          DOCS_PATH: ${{ steps.diagram_config.outputs.docs_path }}
+          DIAGRAM_FILENAME: ${{ steps.diagram_config.outputs.diagram_filename }}
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add "${{ inputs.docs-path }}/${{ steps.diagram_config.outputs.diagram_filename }}" README.md
+          git add "$DOCS_PATH/$DIAGRAM_FILENAME" "$DOCS_PATH/README.md"
           if git diff --cached --quiet; then
             echo "No changes to commit."
           else
