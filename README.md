@@ -1,5 +1,16 @@
 # Terraform Azure Github Template
 
+[![OpenSSF Scorecard](https://api.scorecard.dev/projects/github.com/degero/azure-terraform/badge)](https://scorecard.dev/viewer/?uri=github.com/degero/azure-terraform)
+[![CI](https://github.com/degero/SimpleOpenTelemetry/actions/workflows/main.yml/badge.svg)](https://github.com/degero/SimpleOpenTelemetry/actions/workflows/main.yml)
+[![CodeQL](https://github.com/degero/azure-terraform/actions/workflows/codeql.yml/badge.svg)](https://github.com/degero/azure-terraform/actions/workflows/codeql.yml)
+[![Checkov](https://github.com/degero/azure-terraform/actions/workflows/checkov.yml/badge.svg)](https://github.com/degero/azure-terraform/actions/workflows/checkov.yml)
+[![CSpell check](https://github.com/degero/azure-terraform/actions/workflows/cspell.yml/badge.svg)](https://github.com/degero/azure-terraform/actions/workflows/cspell.yml)
+[![Gitleaks](https://github.com/degero/azure-terraform/actions/workflows/gitleaks.yml/badge.svg)](https://github.com/degero/azure-terraform/actions/workflows/gitleaks.yml)
+[![Lint](https://github.com/degero/azure-terraform/actions/workflows/lint.yml/badge.svg)](https://github.com/degero/azure-terraform/actions/workflows/lint.yml)
+[![Terraform Unit Tests](https://github.com/degero/azure-terraform/actions/workflows/tf-test.yml/badge.svg)](https://github.com/degero/azure-terraform/actions/workflows/tf-test.yml)
+[![Terraform Validate](https://github.com/degero/azure-terraform/actions/workflows/tf-validate.yml/badge.svg)](https://github.com/degero/azure-terraform/actions/workflows/tf-validate.yml)
+[![Trivy Terraform Scan](https://github.com/degero/azure-terraform/actions/workflows/trivy.yml/badge.svg)](https://github.com/degero/azure-terraform/actions/workflows/trivy.yml)
+
 ## Description
 
 An opinionated template for developing Terraform with Github running multi env infra deployments in Azure.
