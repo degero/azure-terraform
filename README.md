@@ -1,7 +1,8 @@
 # Terraform Azure Github Template
 
-[![CodeQL](https://github.com/degero/azure-terraform/actions/workflows/codeql.yml/badge.svg)](https://github.com/degero/azure-terraform/actions/workflows/codeql.yml)
 [![OpenSSF Scorecard](https://api.scorecard.dev/projects/github.com/degero/azure-terraform/badge)](https://scorecard.dev/viewer/?uri=github.com/degero/azure-terraform)
+[![CI](https://github.com/degero/SimpleOpenTelemetry/actions/workflows/main.yml/badge.svg)](https://github.com/degero/SimpleOpenTelemetry/actions/workflows/main.yml)
+[![CodeQL](https://github.com/degero/azure-terraform/actions/workflows/codeql.yml/badge.svg)](https://github.com/degero/azure-terraform/actions/workflows/codeql.yml)
 [![Checkov](https://github.com/degero/azure-terraform/actions/workflows/checkov.yml/badge.svg)](https://github.com/degero/azure-terraform/actions/workflows/checkov.yml)
 [![CSpell check](https://github.com/degero/azure-terraform/actions/workflows/cspell.yml/badge.svg)](https://github.com/degero/azure-terraform/actions/workflows/cspell.yml)
 [![Gitleaks](https://github.com/degero/azure-terraform/actions/workflows/gitleaks.yml/badge.svg)](https://github.com/degero/azure-terraform/actions/workflows/gitleaks.yml)
