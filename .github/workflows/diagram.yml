@@ -176,10 +176,18 @@ jobs:
           DIAGRAM_FILENAME: ${{ steps.diagram_config.outputs.diagram_filename }}
         run: |
           mkdir -p "$DOCS_PATH"
+
+          cat > /tmp/puppeteer-config.json << 'EOF'
+          {
+            "args": ["--no-sandbox", "--disable-setuid-sandbox"]
+          }
+          EOF
+
           /tmp/mermaid-render/node_modules/.bin/mmdc \
             -i diagram.mmd \
             -o "$DOCS_PATH/$DIAGRAM_FILENAME" \
-            -b transparent
+            -b transparent \
+            -p /tmp/puppeteer-config.json
 
       - name: Ensure README references the diagram
         env:
