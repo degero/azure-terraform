@@ -1,6 +1,9 @@
 name: Generate Terraform Diagram
 
 on:
+  push:
+    branches: [main]
+  workflow_dispatch:
   workflow_call:
     inputs:
       terraform-directory:
@@ -33,10 +36,33 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Resolve diagram configuration
+        id: diagram_config
+        shell: bash
+        env:
+          TF_ENVIRONMENTS: ${{ vars.TF_ENVIRONMENTS }}
+          INPUT_TERRAFORM_DIRECTORY: ${{ inputs.terraform-directory }}
+          INPUT_DIAGRAM_FILENAME: ${{ inputs.diagram-filename }}
+        run: |
+          if [[ "$GITHUB_EVENT_NAME" == "push" ]]; then
+            environment="$(python3 -c 'import json, os; print(json.loads(os.environ["TF_ENVIRONMENTS"])[-1])')"
+            if [[ "$environment" == environments/* ]]; then
+              terraform_directory="$environment"
+            else
+              terraform_directory="environments/$environment"
+            fi
+            diagram_filename="${environment##*/}-terraform-diagram.svg"
+          else
+            terraform_directory="$INPUT_TERRAFORM_DIRECTORY"
+            diagram_filename="$INPUT_DIAGRAM_FILENAME"
+          fi
+          echo "terraform_directory=$terraform_directory" >> "$GITHUB_OUTPUT"
+          echo "diagram_filename=$diagram_filename" >> "$GITHUB_OUTPUT"
+
       - uses: ./.github/actions/tf-setup
       - uses: ./.github/actions/tf-init
         with:
-          working_directory: ${{ env.WORKING_DIR }}
+          working_directory: ${{ steps.diagram_config.outputs.terraform_directory }}
           no_backend: "true"
 
       - name: Setup Node
@@ -45,12 +71,12 @@ jobs:
           node-version: "20"
 
       - name: Generate Terraform graph (DOT)
-        working-directory: ${{ inputs.terraform-directory }}
+        working-directory: ${{ steps.diagram_config.outputs.terraform_directory }}
         run: terraform graph > graph.dot
 
       - name: Convert DOT graph to Mermaid syntax
         run: |
-          python3 - "${{ inputs.terraform-directory }}/graph.dot" > diagram.mmd << 'PYEOF'
+          python3 - "${{ steps.diagram_config.outputs.terraform_directory }}/graph.dot" > diagram.mmd << 'PYEOF'
           import re, sys
 
           dot_path = sys.argv[1]
@@ -105,13 +131,13 @@ jobs:
           mkdir -p "${{ inputs.docs-path }}"
           /tmp/mermaid-render/node_modules/.bin/mmdc \
             -i diagram.mmd \
-            -o "${{ inputs.docs-path }}/${{ inputs.diagram-filename }}" \
+            -o "${{ inputs.docs-path }}/${{ steps.diagram_config.outputs.diagram_filename }}" \
             -b transparent
 
       - name: Ensure README references the diagram
         run: |
           README="${{ inputs.docs-path }}/README.md"
-          DOC_LINK="/${{ inputs.diagram-filename }}"
+          DOC_LINK="/${{ steps.diagram_config.outputs.diagram_filename }}"
           MARKER="<!-- terraform-diagram:start -->"
 
           [ -f "$README" ] || touch "$README"
@@ -135,7 +161,7 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add "${{ inputs.docs-path }}/${{ inputs.diagram-filename }}" README.md
+          git add "${{ inputs.docs-path }}/${{ steps.diagram_config.outputs.diagram_filename }}" README.md
           if git diff --cached --quiet; then
             echo "No changes to commit."
           else
