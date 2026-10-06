@@ -157,3 +157,9 @@ No resources.
 ## Outputs
 
 No outputs.
+## Diagram
+<!-- terraform-diagram:start -->
+Auto-generated from Terraform. Do not edit manually.
+
+![Terraform diagram](./terraform-diagram.svg)
+<!-- terraform-diagram:end -->
