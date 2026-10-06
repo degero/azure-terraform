@@ -2,6 +2,7 @@ name: Terraform Unit Tests
 
 on:
   workflow_call:
+  workflow_dispatch:
 
 permissions: {}
 
