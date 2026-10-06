@@ -1,0 +1,23 @@
+#!/usr/bin/env sh
+# pre-commit: scan staged changes for secrets with gitleaks
+
+if ! command -v gitleaks >/dev/null 2>&1; then
+  echo "pre-commit: gitleaks not installed, skipping secret scan" >&2
+  echo "  install: see github.com/gitleaks/gitleaks" >&2
+  exit 0
+fi
+
+# Newer gitleaks uses `git --pre-commit`; older versions use `protect`
+if gitleaks git --help >/dev/null 2>&1; then
+  gitleaks git --pre-commit --staged --redact --verbose
+else
+  gitleaks protect --staged --redact --verbose
+fi
+
+if [ $? -ne 0 ]; then
+  echo "" >&2
+  echo "pre-commit: possible secret in staged changes. Commit blocked." >&2
+  echo "  Remove it, or if it's a false positive, add '# gitleaks:allow'" >&2
+  echo "  on that line or the fingerprint to .gitleaksignore." >&2
+  exit 1
+fi

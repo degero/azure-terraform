@@ -1,2 +1,0 @@
-- Add workflows
-- Test a dev and test deploy with PR commit etc
