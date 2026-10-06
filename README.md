@@ -1,5 +1,8 @@
 # Terraform Azure Github Template
 
+[![CodeQL](https://github.com/degero/azure-terraform/actions/workflows/codeql.yml/badge.svg)](https://github.com/degero/azure-terraform/actions/workflows/codeql.yml)
+[![OpenSSF Scorecard](https://api.scorecard.dev/projects/github.com/degero/azure-terraform/badge)](https://scorecard.dev/viewer/?uri=github.com/degero/azure-terraform)
+
 ## Description
 
 An opinionated template for developing Terraform with Github running multi env infra deployments in Azure.
