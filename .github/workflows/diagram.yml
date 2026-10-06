@@ -1,9 +1,32 @@
 name: Generate Terraform Diagram
 
+permissions: {}
+
 on:
   push:
-    branches: [main]
+    branches: [main] #This will just find the highest tf env in /environments/<env> and generate 1 diagram
   workflow_dispatch:
+    inputs:
+      terraform-directory:
+        description: "Path to the Terraform root module"
+        required: false
+        type: string
+        default: "."
+      docs-path:
+        description: "Directory (relative to repo root) to write the diagram into"
+        required: false
+        type: string
+        default: "docs"
+      diagram-filename:
+        description: "Output filename for the rendered diagram"
+        required: false
+        type: string
+        default: "terraform-diagram.svg"
+      commit-changes:
+        description: "Whether to commit the generated diagram/README changes back to the repo"
+        required: false
+        type: boolean
+        default: true
   workflow_call:
     inputs:
       terraform-directory:
