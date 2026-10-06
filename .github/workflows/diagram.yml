@@ -34,7 +34,7 @@ jobs:
       contents: write
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Resolve diagram configuration
         id: diagram_config
@@ -64,11 +64,6 @@ jobs:
         with:
           working_directory: ${{ steps.diagram_config.outputs.terraform_directory }}
           no_backend: "true"
-
-      - name: Setup Node
-        uses: actions/setup-node@v4
-        with:
-          node-version: "20"
 
       - name: Generate Terraform graph (DOT)
         working-directory: ${{ steps.diagram_config.outputs.terraform_directory }}
@@ -146,7 +141,7 @@ jobs:
             echo "README already has a terraform-diagram section; leaving as-is."
           else
             {
-              echo ""
+              echo "## Diagram"
               echo "$MARKER"
               echo "Auto-generated from Terraform. Do not edit manually."
               echo ""

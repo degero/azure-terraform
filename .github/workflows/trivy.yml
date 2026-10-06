@@ -1,4 +1,4 @@
-name: Trivy terraform scan
+name: Trivy Terraform Scan
 
 on:
   workflow_call:
