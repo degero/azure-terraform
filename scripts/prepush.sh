@@ -64,7 +64,7 @@ else
 fi
 
 echo "==> Github Actions lint (actionlint)"
-if command -v shellcheck >/dev/null 2>&1; then
+if command -v actionlint >/dev/null 2>&1; then
   actionlint
 else
   echo "Github Actions lint (actionlint) not found locally — skipping (will still run in CI)"
