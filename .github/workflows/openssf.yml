@@ -1,0 +1,53 @@
+name: OpenSSF Scorecard analysis
+on:
+  push:
+    branches: ["main"]
+  schedule:
+    - cron: "30 1 * * 6" # weekly, Saturday 01:30 UTC
+  workflow_dispatch:
+
+# Declared at workflow level as read-only; the job below narrows further.
+permissions: read-all
+
+jobs:
+  analysis:
+    name: Scorecard analysis
+    runs-on: ubuntu-latest
+    permissions:
+      security-events: write # to upload SARIF results
+      id-token: write # to publish results and get a badge (see publish_results below)
+      contents: read
+      actions: read # only required for private repos, harmless on public ones
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      - name: Run analysis
+        uses: ossf/scorecard-action@2d1146689b8cda280b9bc96326124645441f03bc # v2.4.4
+        with:
+          results_file: results.sarif
+          results_format: sarif
+          # publish_results: true sends the score to the public
+          # OpenSSF dashboard (securityscorecards.dev) and enables the
+          # README badge. Only meaningful for public repos — leave
+          # false (default) for private repos.
+          publish_results: true
+
+      # Uploaded as a build artifact so results are visible even without
+      # GitHub Advanced Security / before the SARIF upload below lands
+      # in the Security tab. Auto-expires after 5 days.
+      - name: Upload artifact
+        uses: actions/upload-artifact@v8
+        with:
+          name: SARIF file
+          path: results.sarif
+          retention-days: 5
+
+      - name: Upload to code-scanning
+        uses: github/codeql-action/upload-sarif@v4
+        with:
+          sarif_file: results.sarif
+          category: openssf-scorecard
