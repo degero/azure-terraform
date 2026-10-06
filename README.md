@@ -236,3 +236,5 @@ https://github.com/azure-samples/github-terraform-oidc-ci-cd
 https://www.terraform-best-practices.com/examples/terraform/medium-size-infrastructure
 
 https://developer.hashicorp.com/terraform/language/backend/azurerm
+
+https://github.com/mermaid-js/mermaid

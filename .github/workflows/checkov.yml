@@ -3,8 +3,6 @@ name: Checkov # Plan-based scan lives in tf-apply.yml; this covers static HCL on
 on:
   workflow_call:
   workflow_dispatch:
-  schedule:
-    - cron: "0 6 * * 1" # every Monday 06:00 UTC
 
 permissions: {}
 

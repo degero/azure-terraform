@@ -1,0 +1,165 @@
+name: Generate Terraform Diagram
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+  workflow_call:
+    inputs:
+      terraform-directory:
+        description: "Path to the Terraform root module"
+        required: false
+        type: string
+        default: "."
+      docs-path:
+        description: "Directory (relative to repo root) to write the diagram into"
+        required: false
+        type: string
+        default: "docs"
+      diagram-filename:
+        description: "Output filename for the rendered diagram"
+        required: false
+        type: string
+        default: "terraform-diagram.svg"
+      commit-changes:
+        description: "Whether to commit the generated diagram/README changes back to the repo"
+        required: false
+        type: boolean
+        default: true
+
+jobs:
+  generate-diagram:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Resolve diagram configuration
+        id: diagram_config
+        shell: bash
+        env:
+          TF_ENVIRONMENTS: ${{ vars.TF_ENVIRONMENTS }}
+          INPUT_TERRAFORM_DIRECTORY: ${{ inputs.terraform-directory }}
+          INPUT_DIAGRAM_FILENAME: ${{ inputs.diagram-filename }}
+        run: |
+          if [[ "$GITHUB_EVENT_NAME" == "push" ]]; then
+            environment="$(python3 -c 'import json, os; print(json.loads(os.environ["TF_ENVIRONMENTS"])[-1])')"
+            if [[ "$environment" == environments/* ]]; then
+              terraform_directory="$environment"
+            else
+              terraform_directory="environments/$environment"
+            fi
+            diagram_filename="${environment##*/}-terraform-diagram.svg"
+          else
+            terraform_directory="$INPUT_TERRAFORM_DIRECTORY"
+            diagram_filename="$INPUT_DIAGRAM_FILENAME"
+          fi
+          echo "terraform_directory=$terraform_directory" >> "$GITHUB_OUTPUT"
+          echo "diagram_filename=$diagram_filename" >> "$GITHUB_OUTPUT"
+
+      - uses: ./.github/actions/tf-setup
+      - uses: ./.github/actions/tf-init
+        with:
+          working_directory: ${{ steps.diagram_config.outputs.terraform_directory }}
+          no_backend: "true"
+
+      - name: Generate Terraform graph (DOT)
+        working-directory: ${{ steps.diagram_config.outputs.terraform_directory }}
+        run: terraform graph > graph.dot
+
+      - name: Convert DOT graph to Mermaid syntax
+        run: |
+          python3 - "${{ steps.diagram_config.outputs.terraform_directory }}/graph.dot" > diagram.mmd << 'PYEOF'
+          import re, sys
+
+          dot_path = sys.argv[1]
+          with open(dot_path) as f:
+              dot = f.read()
+
+          # Extract edges of the form: "node_a" -> "node_b"
+          edge_re = re.compile(r'"([^"]+)"\s*->\s*"([^"]+)"')
+          edges = edge_re.findall(dot)
+
+          def clean(label: str) -> str:
+              # Strip terraform graph noise, keep resource address readable
+              label = label.split(" (expand)")[0]
+              label = re.sub(r'[^A-Za-z0-9_\.\[\]/-]', '_', label)
+              return label
+
+          def node_id(label: str) -> str:
+              return re.sub(r'[^A-Za-z0-9_]', '_', label)
+
+          print("flowchart LR")
+          seen_nodes = set()
+          for src, dst in edges:
+              src_c, dst_c = clean(src), clean(dst)
+              src_id, dst_id = node_id(src_c), node_id(dst_c)
+              for nid, label in ((src_id, src_c), (dst_id, dst_c)):
+                  if nid not in seen_nodes:
+                      seen_nodes.add(nid)
+                      print(f'    {nid}["{label}"]')
+              print(f"    {src_id} --> {dst_id}")
+          PYEOF
+
+      - name: Install mermaid-cli (mermaid engine built from mermaid-js/mermaid@main)
+        run: |
+          mkdir -p /tmp/mermaid-render
+          cd /tmp/mermaid-render
+          cat > package.json << 'EOF'
+          {
+            "name": "mermaid-render",
+            "private": true,
+            "dependencies": {
+              "@mermaid-js/mermaid-cli": "latest"
+            },
+            "overrides": {
+              "mermaid": "github:mermaid-js/mermaid#main"
+            }
+          }
+          EOF
+          npm install --no-fund --no-audit
+
+      - name: Render diagram to SVG
+        run: |
+          mkdir -p "${{ inputs.docs-path }}"
+          /tmp/mermaid-render/node_modules/.bin/mmdc \
+            -i diagram.mmd \
+            -o "${{ inputs.docs-path }}/${{ steps.diagram_config.outputs.diagram_filename }}" \
+            -b transparent
+
+      - name: Ensure README references the diagram
+        run: |
+          README="${{ inputs.docs-path }}/README.md"
+          DOC_LINK="/${{ steps.diagram_config.outputs.diagram_filename }}"
+          MARKER="<!-- terraform-diagram:start -->"
+
+          [ -f "$README" ] || touch "$README"
+
+          if grep -qF "$MARKER" "$README"; then
+            echo "README already has a terraform-diagram section; leaving as-is."
+          else
+            {
+              echo "## Diagram"
+              echo "$MARKER"
+              echo "Auto-generated from Terraform. Do not edit manually."
+              echo ""
+              echo "![Terraform diagram]($DOC_LINK)"
+              echo "<!-- terraform-diagram:end -->"
+            } >> "$README"
+            echo "Injected diagram reference into README.md"
+          fi
+
+      - name: Commit changes
+        if: ${{ inputs.commit-changes }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add "${{ inputs.docs-path }}/${{ steps.diagram_config.outputs.diagram_filename }}" README.md
+          if git diff --cached --quiet; then
+            echo "No changes to commit."
+          else
+            git commit -m "chore: update Terraform diagram"
+            git push
+          fi
