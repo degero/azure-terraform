@@ -27,6 +27,11 @@ on:
         required: false
         type: boolean
         default: true
+      simplified:
+        description: "Render a simplified diagram (hides lower-level resources)"
+        required: false
+        type: boolean
+        default: false
   workflow_call:
     inputs:
       terraform-directory:
@@ -49,6 +54,15 @@ on:
         required: false
         type: boolean
         default: true
+      simplified:
+        description: "Render a simplified diagram (hides lower-level resources)"
+        required: false
+        type: boolean
+        default: false
+
+env:
+  # Pin so diagram output only changes when you choose to upgrade.
+  TERRAVISION_VERSION: "0.48.2"
 
 jobs:
   generate-diagram:
@@ -69,6 +83,14 @@ jobs:
           INPUT_DOCS_PATH: ${{ inputs.docs-path }}
           INPUT_DIAGRAM_FILENAME: ${{ inputs.diagram-filename }}
           INPUT_COMMIT_CHANGES: ${{ inputs.commit-changes }}
+          INPUT_SIMPLIFIED: ${{ inputs.simplified }}
+          TF_IN_AUTOMATION: "true"
+          ARM_CLIENT_ID: ${{ vars.AZURE_CLIENT_ID }}
+          ARM_SUBSCRIPTION_ID: ${{ vars.AZURE_SUBSCRIPTION_ID }}
+          ARM_TENANT_ID: ${{ vars.AZURE_TENANT_ID }}
+          ARM_USE_OIDC: true
+          TF_INPUT: 0
+          TF_VAR_ci_run: "true"
         run: |
           if [[ "$GITHUB_EVENT_NAME" == "push" ]]; then
             environment="$(python3 -c 'import json, os; print(json.loads(os.environ["TF_ENVIRONMENTS"])[-1])')"
@@ -80,11 +102,13 @@ jobs:
             docs_path="docs"
             diagram_filename="${environment##*/}-terraform-diagram.svg"
             commit_changes="true"
+            simplified="false"
           else
             terraform_directory="${INPUT_TERRAFORM_DIRECTORY:-.}"
             docs_path="${INPUT_DOCS_PATH:-docs}"
             diagram_filename="${INPUT_DIAGRAM_FILENAME:-terraform-diagram.svg}"
             commit_changes="${INPUT_COMMIT_CHANGES:-true}"
+            simplified="${INPUT_SIMPLIFIED:-false}"
           fi
 
           if [[ -z "$terraform_directory" ]]; then
@@ -96,18 +120,19 @@ jobs:
           echo "docs_path=$docs_path" >> "$GITHUB_OUTPUT"
           echo "diagram_filename=$diagram_filename" >> "$GITHUB_OUTPUT"
           echo "commit_changes=$commit_changes" >> "$GITHUB_OUTPUT"
+          echo "simplified=$simplified" >> "$GITHUB_OUTPUT"
 
           echo "terraform_directory='$terraform_directory'"
           echo "docs_path='$docs_path'"
           echo "diagram_filename='$diagram_filename'"
           echo "commit_changes='$commit_changes'"
+          echo "simplified='$simplified'"
 
       - uses: ./.github/actions/tf-setup
 
-      # `terraform graph` needs an initialized backend, so `init -backend=false` is not enough.
-      # Swap whatever backend is configured for a local one (runner-only file, never committed),
-      # so no remote state or credentials are required.
-      - name: Init Terraform with local backend override (diagram only)
+      # Terravision runs Terraform under the hood, so a remote backend would need
+      # credentials. Swap it for a local one (runner-only file, never committed).
+      - name: Override backend with local (diagram only)
         working-directory: ${{ steps.diagram_config.outputs.terraform_directory }}
         run: |
           cat > backend_override.tf << 'EOF'
@@ -115,111 +140,45 @@ jobs:
             backend "local" {}
           }
           EOF
-          terraform init -input=false
 
-      - name: Generate Terraform graph (DOT)
-        working-directory: ${{ steps.diagram_config.outputs.terraform_directory }}
-        run: terraform graph > graph.dot
-
-      - name: Convert DOT graph to Mermaid syntax
+      - name: Install Graphviz
         run: |
-          python3 - "${{ steps.diagram_config.outputs.terraform_directory }}/graph.dot" > diagram.mmd << 'PYEOF'
-          import re, sys
-          from collections import defaultdict
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends graphviz
 
-          dot = open(sys.argv[1]).read()
-          edge_re = re.compile(r'"((?:[^"\\]|\\.)*)"\s*->\s*"((?:[^"\\]|\\.)*)"')
-
-          def norm(l):
-              return l.replace("[root] ", "").replace(" (expand)", "")
-
-          DROP_PREFIX = ("var.", "local.", "output.", "provider[", "data.")
-          def keep(n):
-              base = re.sub(r"^(module\.[^.]+\.)+", "", n)   # strip module path
-              if "(close)" in n or n == "root" or n.startswith("module.") and "." not in n[7:]:
-                  return False
-              return not base.startswith(DROP_PREFIX)
-
-          adj = defaultdict(set)
-          for s, d in edges if (edges := edge_re.findall(dot)) else []:
-              adj[norm(s)].add(norm(d))
-
-          def kept_targets(n, seen):
-              for m in adj[n]:
-                  if keep(m):
-                      yield m
-                  elif m not in seen:
-                      seen.add(m)
-                      yield from kept_targets(m, seen)
-
-          def split(n):
-              m = re.match(r"^((?:module\.[^.]+\.)*)(.*)$", n)
-              return (m.group(1).rstrip(".") or "root", m.group(2))
-
-          def nid(n): return re.sub(r"[^A-Za-z0-9_]", "_", n)
-
-          nodes = {n for n in adj if keep(n)}
-          links = set()
-          for n in list(nodes):
-              for t in kept_targets(n, {n}):
-                  nodes.add(t)
-                  if t != n:
-                      links.add((n, t))
-
-          groups = defaultdict(list)
-          for n in nodes:
-              mod, label = split(n)
-              groups[mod].append((n, label))
-
-          print("flowchart LR")
-          for mod, items in sorted(groups.items()):
-              print(f'  subgraph {nid("g_" + mod)}["{mod}"]')
-              for n, label in sorted(items):
-                  print(f'    {nid(n)}["{label}"]')
-              print("  end")
-          for s, d in sorted(links):
-              print(f"  {nid(s)} --> {nid(d)}")
-          PYEOF
-
-      - name: Debug diagram input
+      - name: Install Terravision
         run: |
-          echo "graph.dot lines: $(wc -l < "${{ steps.diagram_config.outputs.terraform_directory }}/graph.dot")"
-          echo "diagram.mmd lines: $(wc -l < diagram.mmd)"
-          head -n 20 diagram.mmd
+          pipx install "terravision==${TERRAVISION_VERSION}"
+          terravision --help > /dev/null
 
-      - name: Install mermaid-cli (mermaid engine built from mermaid-js/mermaid@main)
-        run: |
-          mkdir -p /tmp/mermaid-render
-          cd /tmp/mermaid-render
-          cat > package.json << 'EOF'
-          {
-            "name": "mermaid-render",
-            "private": true,
-            "dependencies": {
-              "@mermaid-js/mermaid-cli": "github:mermaid-js/mermaid-cli#db1ceebbe529d7975474eb0d0e9c23e9dc57cd37"
-            }
-          }
-          EOF
-          npm install --no-fund --no-audit
-
-      - name: Render diagram to SVG
+      - name: Render diagram with Terravision
         env:
+          TF_DIR: ${{ steps.diagram_config.outputs.terraform_directory }}
           DOCS_PATH: ${{ steps.diagram_config.outputs.docs_path }}
           DIAGRAM_FILENAME: ${{ steps.diagram_config.outputs.diagram_filename }}
+          SIMPLIFIED: ${{ steps.diagram_config.outputs.simplified }}
         run: |
+          set -euo pipefail
           mkdir -p "$DOCS_PATH"
 
-          cat > /tmp/puppeteer-config.json << 'EOF'
-          {
-            "args": ["--no-sandbox", "--disable-setuid-sandbox"]
-          }
-          EOF
+          # Terravision appends the extension itself, so strip ".svg" from the name.
+          outbase="$DOCS_PATH/${DIAGRAM_FILENAME%.svg}"
 
-          /tmp/mermaid-render/node_modules/.bin/mmdc \
-            -i diagram.mmd \
-            -o "$DOCS_PATH/$DIAGRAM_FILENAME" \
-            -b transparent \
-            -p /tmp/puppeteer-config.json
+          args=(draw --source "$TF_DIR" --format svg --outfile "$outbase")
+          if [[ "$SIMPLIFIED" == "true" ]]; then
+            args+=(--simplified)
+          fi
+
+          terravision "${args[@]}"
+
+          # Guard against silently committing a missing or empty diagram.
+          if [[ ! -s "$DOCS_PATH/$DIAGRAM_FILENAME" ]]; then
+            echo "::error::Expected $DOCS_PATH/$DIAGRAM_FILENAME was not created or is empty."
+            echo "Files in $DOCS_PATH and the working directory:"
+            ls -la "$DOCS_PATH" . || true
+            exit 1
+          fi
+          ls -l "$DOCS_PATH/$DIAGRAM_FILENAME"
 
           ls -l "$DOCS_PATH/$DIAGRAM_FILENAME"
       - name: Ensure README references the diagram
