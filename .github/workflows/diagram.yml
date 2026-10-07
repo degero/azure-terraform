@@ -250,16 +250,39 @@ jobs:
             args+=(--simplified)
           fi
 
+          marker="$(mktemp)"
           terravision "${args[@]}"
 
-          # Guard against silently committing a missing or empty diagram.
-          if [[ ! -s "$DOCS_PATH/$DIAGRAM_FILENAME" ]]; then
-            echo "::error::Expected $DOCS_PATH/$DIAGRAM_FILENAME was not created or is empty."
-            echo "Files in $DOCS_PATH and the working directory:"
+          # Terravision adds its own suffix to --outfile (e.g. "<name>-azure.dot.svg"),
+          # so find the SVG(s) written by *this* run and normalise to the expected name.
+          expected="$DOCS_PATH/$DIAGRAM_FILENAME"
+          mapfile -t produced < <(find "$DOCS_PATH" -maxdepth 1 -name '*.svg' -newer "$marker" | sort)
+          echo "SVGs produced by this run: ${produced[*]:-<none>}"
+
+          if [[ ${#produced[@]} -eq 0 ]]; then
+            echo "::error::Terravision produced no SVG in $DOCS_PATH."
             ls -la "$DOCS_PATH" . || true
             exit 1
           fi
-          ls -l "$DOCS_PATH/$DIAGRAM_FILENAME"
+
+          if printf '%s\n' "${produced[@]}" | grep -qxF "$expected"; then
+            : # already at the expected path
+          elif [[ ${#produced[@]} -eq 1 ]]; then
+            mv -f "${produced[0]}" "$expected"
+          else
+            echo "::error::Multiple SVGs produced and none match $expected: ${produced[*]}"
+            exit 1
+          fi
+
+          # Remove other generated leftovers (intermediate .dot files, extra SVGs) from this run.
+          find "$DOCS_PATH" -maxdepth 1 \( -name '*.dot' -o -name '*.svg' \) -newer "$marker" \
+            ! -path "$expected" -delete
+
+          if [[ ! -s "$expected" ]]; then
+            echo "::error::$expected is empty."
+            exit 1
+          fi
+          ls -l "$expected"
 
       - name: Ensure README references the diagram
         env:
