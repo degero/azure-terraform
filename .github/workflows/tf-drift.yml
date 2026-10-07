@@ -1,0 +1,202 @@
+name: Terraform Drift Detection
+
+on:
+  schedule:
+    - cron: "0 3 * * *"
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: "Target environment (leave blank to run all configured environments)"
+        type: string
+        required: false
+        default: ""
+
+permissions: {}
+
+jobs:
+  resolve-environments:
+    name: Resolve Environments
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    outputs:
+      environments: ${{ steps.set-envs.outputs.environments }}
+    steps:
+      - name: Determine environments
+        id: set-envs
+        run: |
+          INPUT_ENV="${{ github.event.inputs.environment }}"
+          if [ -n "$INPUT_ENV" ]; then
+            echo "environments=[\"$INPUT_ENV\"]" >> "$GITHUB_OUTPUT"
+          else
+            echo "environments=${{ vars.TF_ENVIRONMENTS }}" >> "$GITHUB_OUTPUT"
+          fi
+
+  drift-detect:
+    name: Drift Check (${{ matrix.environment }})
+    needs: resolve-environments
+    runs-on: ubuntu-latest
+    environment: ${{ matrix.environment }}-plan
+    permissions:
+      id-token: write
+      contents: read
+      issues: write
+    concurrency:
+      group: tf-drift-${{ matrix.environment }}
+      cancel-in-progress: false
+    strategy:
+      fail-fast: false
+      matrix:
+        environment: ${{ fromJSON(needs.resolve-environments.outputs.environments) }}
+    env:
+      TF_IN_AUTOMATION: "true"
+      TF_PLUGIN_CACHE_DIR: ${{ github.workspace }}/.terraform-cache
+      ENVIRONMENT: ${{ matrix.environment }}
+      ARM_CLIENT_ID: ${{ vars.AZURE_CLIENT_ID }}
+      ARM_SUBSCRIPTION_ID: ${{ vars.AZURE_SUBSCRIPTION_ID }}
+      ARM_TENANT_ID: ${{ vars.AZURE_TENANT_ID }}
+      ARM_USE_OIDC: "true"
+      WORKING_DIR: ./environments/${{ matrix.environment }}
+      TF_INPUT: 0
+      TF_VAR_ci_run: "true"
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+
+      - name: Terraform Init
+        uses: ./.github/actions/tf-init
+        with:
+          working_directory: ${{ env.WORKING_DIR }}
+
+      - name: Run Terraform Plan (Drift Detection)
+        id: plan
+        working-directory: ${{ env.WORKING_DIR }}
+        run: |
+          set +e
+          terraform plan -detailed-exitcode -var-file=terraform.tfvars -out=tfplan
+          EXIT_CODE=$?
+          set -e
+          echo "exitcode=$EXIT_CODE" >> "$GITHUB_OUTPUT"
+          if [ "$EXIT_CODE" -eq 1 ]; then
+            echo "Terraform plan failed with an error."
+            exit 1
+          fi
+
+      - name: Convert plan to JSON
+        if: steps.plan.outputs.exitcode == '0' || steps.plan.outputs.exitcode == '2'
+        working-directory: ${{ env.WORKING_DIR }}
+        run: terraform show -json tfplan > tfplan.json
+
+      - name: Build plan summary
+        if: steps.plan.outputs.exitcode == '0' || steps.plan.outputs.exitcode == '2'
+        id: plan_summary
+        working-directory: ${{ env.WORKING_DIR }}
+        run: |
+          jq -r '
+            def sym(a):
+              if a == ["create"] then "🟢 add"
+              elif a == ["update"] then "🟡 change"
+              elif a == ["delete"] then "🔴 destroy"
+              elif (a == ["create","delete"]) or (a == ["delete","create"]) then "♻️ replace"
+              else "• " + (a | join(",")) end;
+
+            [.resource_changes[]? | select(.change.actions != ["no-op"])] as $changes
+            | ($changes | map(select(.change.actions == ["create"])) | length) as $add
+            | ($changes | map(select(.change.actions == ["update"])) | length) as $change
+            | ($changes | map(select(.change.actions == ["delete"])) | length) as $destroy
+            | ($changes | map(select((.change.actions == ["create","delete"]) or (.change.actions == ["delete","create"]))) | length) as $replace
+            | "**Plan summary:** \($add) to add, \($change) to change, \($destroy) to destroy" +
+              (if $replace > 0 then ", \($replace) to replace" else "" end),
+              "",
+              (if ($changes | length) == 0 then "_No resource changes._"
+               else ($changes[] | "- \(sym(.change.actions)) `\(.address)`") end)
+          ' tfplan.json > plan_summary.md
+
+      - name: Publish Step Summary
+        if: always() && (steps.plan.outputs.exitcode == '0' || steps.plan.outputs.exitcode == '2')
+        working-directory: ${{ env.WORKING_DIR }}
+        run: |
+          if [ "${{ steps.plan.outputs.exitcode }}" -eq 2 ]; then
+            echo "## ⚠️ Terraform Drift Detected — \`${{ env.ENVIRONMENT }}\`" >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "## ✅ Terraform In Sync — \`${{ env.ENVIRONMENT }}\`" >> "$GITHUB_STEP_SUMMARY"
+          fi
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          cat plan_summary.md >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Manage Drift Issue
+        if: steps.plan.outputs.exitcode == '0' || steps.plan.outputs.exitcode == '2'
+        uses: actions/github-script@v9
+        env:
+          DRIFT_EXIT_CODE: ${{ steps.plan.outputs.exitcode }}
+          SUMMARY_FILE: ${{ env.WORKING_DIR }}/plan_summary.md
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const fs = require('fs');
+            const environment = process.env.ENVIRONMENT;
+            const exitCode = process.env.DRIFT_EXIT_CODE;
+            const issueTitle = `[Drift Detected] Terraform Drift in ${environment}`;
+            const marker = `<!-- terraform-drift-issue: ${environment} -->`;
+            const runUrl = `${context.payload.repository ? context.payload.repository.html_url : `https://github.com/${context.repo.owner}/${context.repo.repo}`}/actions/runs/${context.runId}`;
+
+            // Search for existing open drift issue for this environment
+            const { data: issues } = await github.rest.issues.listForRepo({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              state: 'open',
+              labels: 'drift'
+            });
+
+            const existingIssue = issues.find(i => i.title === issueTitle || (i.body && i.body.includes(marker)));
+
+            if (exitCode === '2') {
+              const summaryContent = fs.existsSync(process.env.SUMMARY_FILE)
+                ? fs.readFileSync(process.env.SUMMARY_FILE, 'utf8')
+                : 'Drift detected, summary unavailable.';
+
+              const body = `${marker}\n## ⚠️ Terraform Drift Detected in \`${environment}\`\n\nCloud infrastructure has drifted from the Terraform configuration.\n\n${summaryContent}\n\n---\n*Detected in workflow run: [${context.runId}](${runUrl})*`;
+
+              if (existingIssue) {
+                await github.rest.issues.update({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  issue_number: existingIssue.number,
+                  body: body
+                });
+                console.log(`Updated existing drift issue #${existingIssue.number}`);
+              } else {
+                const newIssue = await github.rest.issues.create({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  title: issueTitle,
+                  body: body,
+                  labels: ['drift', 'terraform', environment]
+                });
+                console.log(`Created new drift issue #${newIssue.data.number}`);
+              }
+            } else if (exitCode === '0' && existingIssue) {
+              const resolutionComment = `${marker}\n## ✅ Drift Resolved\n\nTerraform state is now synchronized with Azure infrastructure for \`${environment}\`.\n\n*Verified in workflow run: [${context.runId}](${runUrl})*`;
+
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: existingIssue.number,
+                body: resolutionComment
+              });
+
+              await github.rest.issues.update({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: existingIssue.number,
+                state: 'closed'
+              });
+              console.log(`Closed resolved drift issue #${existingIssue.number}`);
+            }
+
+      - name: Fail job if drift detected
+        if: steps.plan.outputs.exitcode == '2'
+        run: |
+          echo "Drift was detected for environment ${{ env.ENVIRONMENT }}. See step summary and open drift issue for details."
+          exit 1
