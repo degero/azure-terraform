@@ -125,34 +125,60 @@ jobs:
         run: |
           python3 - "${{ steps.diagram_config.outputs.terraform_directory }}/graph.dot" > diagram.mmd << 'PYEOF'
           import re, sys
+          from collections import defaultdict
 
-          dot_path = sys.argv[1]
-          with open(dot_path) as f:
-              dot = f.read()
+          dot = open(sys.argv[1]).read()
+          edge_re = re.compile(r'"((?:[^"\\]|\\.)*)"\s*->\s*"((?:[^"\\]|\\.)*)"')
 
-          # Extract edges of the form: "node_a" -> "node_b"
-          edge_re = re.compile(r'"([^"]+)"\s*->\s*"([^"]+)"')
-          edges = edge_re.findall(dot)
+          def norm(l):
+              return l.replace("[root] ", "").replace(" (expand)", "")
 
-          def clean(label: str) -> str:
-              # Strip terraform graph noise, keep resource address readable
-              label = label.split(" (expand)")[0]
-              label = re.sub(r'[^A-Za-z0-9_\.\[\]/-]', '_', label)
-              return label
+          DROP_PREFIX = ("var.", "local.", "output.", "provider[", "data.")
+          def keep(n):
+              base = re.sub(r"^(module\.[^.]+\.)+", "", n)   # strip module path
+              if "(close)" in n or n == "root" or n.startswith("module.") and "." not in n[7:]:
+                  return False
+              return not base.startswith(DROP_PREFIX)
 
-          def node_id(label: str) -> str:
-              return re.sub(r'[^A-Za-z0-9_]', '_', label)
+          adj = defaultdict(set)
+          for s, d in edges if (edges := edge_re.findall(dot)) else []:
+              adj[norm(s)].add(norm(d))
+
+          def kept_targets(n, seen):
+              for m in adj[n]:
+                  if keep(m):
+                      yield m
+                  elif m not in seen:
+                      seen.add(m)
+                      yield from kept_targets(m, seen)
+
+          def split(n):
+              m = re.match(r"^((?:module\.[^.]+\.)*)(.*)$", n)
+              return (m.group(1).rstrip(".") or "root", m.group(2))
+
+          def nid(n): return re.sub(r"[^A-Za-z0-9_]", "_", n)
+
+          nodes = {n for n in adj if keep(n)}
+          links = set()
+          for n in list(nodes):
+              for t in kept_targets(n, {n}):
+                  nodes.add(t)
+                  if t != n:
+                      links.add((n, t))
+
+          groups = defaultdict(list)
+          for n in nodes:
+              mod, label = split(n)
+              groups[mod].append((n, label))
 
           print("flowchart LR")
-          seen_nodes = set()
-          for src, dst in edges:
-              src_c, dst_c = clean(src), clean(dst)
-              src_id, dst_id = node_id(src_c), node_id(dst_c)
-              for nid, label in ((src_id, src_c), (dst_id, dst_c)):
-                  if nid not in seen_nodes:
-                      seen_nodes.add(nid)
-                      print(f'    {nid}["{label}"]')
-              print(f"    {src_id} --> {dst_id}")
+          for mod, items in sorted(groups.items()):
+              print(f'  subgraph {nid("g_" + mod)}["{mod}"]')
+              for n, label in sorted(items):
+                  print(f'    {nid(n)}["{label}"]')
+              print("  end")
+          for s, d in sorted(links):
+              print(f"  {nid(s)} --> {nid(d)}")
           PYEOF
 
       - name: Debug diagram input
