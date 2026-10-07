@@ -72,7 +72,7 @@ on:
 
 env:
   # Pin so diagram output only changes when you choose to upgrade.
-  TERRAVISION_VERSION: "0.50.2"
+  TERRAVISION_VERSION: "0.48.2"
 
 jobs:
   config:
@@ -188,27 +188,52 @@ jobs:
           pipx install "terravision==${TERRAVISION_VERSION}"
           terravision --help > /dev/null
 
-      - name: Pre-seed Terravision module cache (SHA-pinned modules)
+      # Terravision clones external modules with `git clone --branch <ref>`, which
+      # git rejects for commit SHAs. This wrapper (used only by Terravision, via
+      # GIT_PYTHON_GIT_EXECUTABLE) emulates that clone with init + fetch-by-SHA.
+      # Everything else is passed straight through to the real git.
+      - name: Install git wrapper for SHA-pinned modules
         run: |
+          mkdir -p /tmp/git-wrapper
+          REAL_GIT="$(command -v git)"
+          cat > /tmp/git-wrapper/git << EOF
+          #!/usr/bin/env bash
           set -euo pipefail
-          cache="$HOME/.terravision/module_cache"
-          mkdir -p "$cache"
-
-          grep -rhoE 'github\.com/[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+\?ref=[0-9a-f]{40}' \
-            --include='*.tf' . | sort -u | while IFS= read -r src; do
-              repo="${src%%\?*}"
-              sha="${src##*=}"
-              dir="$cache/$(echo "$repo" | tr '/' '_')_ref_${sha}"
-              [ -d "$dir/.git" ] && continue
-              echo "Seeding $repo @ $sha -> $dir"
-              git init -q "$dir"
-              git -C "$dir" remote add origin "https://$repo"
-              git -C "$dir" fetch -q --depth 1 origin "$sha"
-              git -C "$dir" checkout -q FETCH_HEAD
+          REAL_GIT="$REAL_GIT"
+          EOF
+          cat >> /tmp/git-wrapper/git << 'EOF'
+          if [[ "${1:-}" == "clone" ]]; then
+            args=("$@")
+            sha=""; url=""; dest=""; sep=-1
+            for i in "${!args[@]}"; do
+              if [[ "${args[$i]}" == "--branch" && "${args[$((i+1))]:-}" =~ ^[0-9a-f]{40,64}$ ]]; then
+                sha="${args[$((i+1))]}"
+              fi
+              if [[ "${args[$i]}" == "--" && $sep -lt 0 ]]; then sep=$i; fi
             done
+            if [[ -n "$sha" && $sep -ge 0 ]]; then
+              url="${args[$((sep+1))]}"
+              dest="${args[$((sep+2))]}"
+              echo "git-wrapper: fetching $url @ $sha into $dest" >&2
+              if [[ ! -d "$dest/.git" ]]; then
+                mkdir -p "$dest"
+                "$REAL_GIT" init -q "$dest"
+                "$REAL_GIT" -C "$dest" remote add origin "$url"
+                "$REAL_GIT" -C "$dest" fetch -q --depth 1 origin "$sha"
+                "$REAL_GIT" -C "$dest" checkout -q FETCH_HEAD
+              fi
+              exit 0
+            fi
+          fi
+          exec "$REAL_GIT" "$@"
+          EOF
+          chmod +x /tmp/git-wrapper/git
+          # sanity check: passthrough works
+          /tmp/git-wrapper/git --version
 
       - name: Render diagram with Terravision
         env:
+          GIT_PYTHON_GIT_EXECUTABLE: /tmp/git-wrapper/git
           TF_DIR: ${{ needs.config.outputs.terraform_directory }}
           DOCS_PATH: ${{ needs.config.outputs.docs_path }}
           DIAGRAM_FILENAME: ${{ needs.config.outputs.diagram_filename }}
