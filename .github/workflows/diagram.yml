@@ -188,6 +188,25 @@ jobs:
           pipx install "terravision==${TERRAVISION_VERSION}"
           terravision --help > /dev/null
 
+      - name: Pre-seed Terravision module cache (SHA-pinned modules)
+        run: |
+          set -euo pipefail
+          cache="$HOME/.terravision/module_cache"
+          mkdir -p "$cache"
+
+          grep -rhoE 'github\.com/[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+\?ref=[0-9a-f]{40}' \
+            --include='*.tf' . | sort -u | while IFS= read -r src; do
+              repo="${src%%\?*}"
+              sha="${src##*=}"
+              dir="$cache/$(echo "$repo" | tr '/' '_')_ref_${sha}"
+              [ -d "$dir/.git" ] && continue
+              echo "Seeding $repo @ $sha -> $dir"
+              git init -q "$dir"
+              git -C "$dir" remote add origin "https://$repo"
+              git -C "$dir" fetch -q --depth 1 origin "$sha"
+              git -C "$dir" checkout -q FETCH_HEAD
+            done
+
       - name: Render diagram with Terravision
         env:
           TF_DIR: ${{ needs.config.outputs.terraform_directory }}
