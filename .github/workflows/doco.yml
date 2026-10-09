@@ -45,7 +45,7 @@ jobs:
         if: hashFiles(format('{0}/**', matrix.root)) != ''
         run: bash scripts/actions/my-custom-script.sh "${{ matrix.root }}"
 
-            - name: Set up Infracost
+      - name: Set up Infracost
         if: matrix.root == 'environments' && hashFiles('environments/**/*.tf') != ''
         uses: infracost/actions/setup@v3
         with:
