@@ -67,7 +67,7 @@ jobs:
               json_file="$(mktemp)"
               infracost breakdown --path "$dir" --format json --out-file "$json_file" >/dev/null
 
-              currency="$(jq -r '.currency // "USD"' "$json_file")"
+              currency="$(jq -r ".currency // \"USD\"" "$json_file")"
               cost="$(jq -r '.totalMonthlyCost // 0' "$json_file")"
               printf '| `%s` | %s %.2f |\n' "${dir%/}" "$currency" "$cost"
 

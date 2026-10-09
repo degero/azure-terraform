@@ -113,11 +113,13 @@ jobs:
             exit 1
           fi
 
-          echo "terraform_directory=$terraform_directory" >> "$GITHUB_OUTPUT"
-          echo "docs_path=$docs_path" >> "$GITHUB_OUTPUT"
-          echo "diagram_filename=$diagram_filename" >> "$GITHUB_OUTPUT"
-          echo "commit_changes=$commit_changes" >> "$GITHUB_OUTPUT"
-          echo "environment=$environment_name" >> "$GITHUB_OUTPUT"
+          {
+            echo "terraform_directory=$terraform_directory"
+            echo "docs_path=$docs_path"
+            echo "diagram_filename=$diagram_filename"
+            echo "commit_changes=$commit_changes"
+            echo "environment=$environment_name"
+          } >> "$GITHUB_OUTPUT"
 
           echo "terraform_directory='$terraform_directory'"
           echo "docs_path='$docs_path'"
