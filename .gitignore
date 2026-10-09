@@ -47,3 +47,4 @@ terraform.rc
 .env*
 !.env.example
 tfplan*
+devcontainer-lock.json

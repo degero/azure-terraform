@@ -1,3 +1,4 @@
+# backend.hcl.example
 # Copy to backend.hcl (gitignored) and fill in, or pass equivalent
 # -backend-config flags in CI. Each environment MUST use a distinct
 # storage account/container/key combination or state files will collide.
