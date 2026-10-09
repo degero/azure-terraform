@@ -52,7 +52,8 @@ module "this" {
   account_tier             = var.account_tier
   account_replication_type = var.replication_type
 
-  tags = var.tags
+  tags             = var.tags
+  enable_telemetry = false
 }
 
 output "resource_id" {

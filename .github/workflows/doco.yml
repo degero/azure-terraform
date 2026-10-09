@@ -45,6 +45,36 @@ jobs:
         if: hashFiles(format('{0}/**', matrix.root)) != ''
         run: bash scripts/actions/my-custom-script.sh "${{ matrix.root }}"
 
+            - name: Set up Infracost
+        if: matrix.root == 'environments' && hashFiles('environments/**/*.tf') != ''
+        uses: infracost/actions/setup@v3
+        with:
+          api-key: ${{ secrets.INFRACOST_API_KEY }}
+
+      - name: Add environment cost estimates
+        if: matrix.root == 'environments' && hashFiles('environments/**/*.tf') != ''
+        run: |
+          {
+            echo
+            echo "## Estimated monthly costs"
+            echo
+            echo "| Environment | Estimated monthly cost |"
+            echo "|---|---:|"
+
+            for dir in environments/*/; do
+              [ -d "$dir" ] || continue
+
+              json_file="$(mktemp)"
+              infracost breakdown --path "$dir" --format json --out-file "$json_file" >/dev/null
+
+              currency="$(jq -r '.currency // "USD"' "$json_file")"
+              cost="$(jq -r '.totalMonthlyCost // 0' "$json_file")"
+              printf '| `%s` | %s %.2f |\n' "${dir%/}" "$currency" "$cost"
+
+              rm -f "$json_file"
+            done
+          } >> docs/environments/README.md
+
       - name: Commit and push
         if: hashFiles(format('{0}/**', matrix.root)) != ''
         run: |
