@@ -138,10 +138,6 @@ jobs:
       # id-token: write   # uncomment if you authenticate with OIDC (ARM_USE_OIDC)
     env:
       TF_IN_AUTOMATION: "true"
-      ARM_CLIENT_ID: ${{ vars.AZURE_CLIENT_ID }}
-      ARM_SUBSCRIPTION_ID: ${{ vars.AZURE_SUBSCRIPTION_ID }}
-      ARM_TENANT_ID: ${{ vars.AZURE_TENANT_ID }}
-      ARM_USE_OIDC: true
       TF_INPUT: 0
       TF_VAR_ci_run: "true"
       # Pinned on purpose: bump deliberately after checking a diagram still renders.
@@ -151,6 +147,11 @@ jobs:
       - uses: ./.github/actions/tf-setup
       # Use a local backend so no remote state access is needed (runner-only file, never committed).
       - name: Init Terraform with local backend override (diagram only)
+        env:
+          ARM_CLIENT_ID: ${{ vars.AZURE_CLIENT_ID }}
+          ARM_SUBSCRIPTION_ID: ${{ vars.AZURE_SUBSCRIPTION_ID }}
+          ARM_TENANT_ID: ${{ vars.AZURE_TENANT_ID }}
+          ARM_USE_OIDC: true
         working-directory: ${{ needs.config.outputs.terraform_directory }}
         run: |
           cat > backend_override.tf << 'EOF'
@@ -165,6 +166,11 @@ jobs:
       # TerraVision reuses these two files, so it doesn't plan a second time.
       - name: Plan and export JSON + dependency graph
         working-directory: ${{ needs.config.outputs.terraform_directory }}
+        env:
+          ARM_CLIENT_ID: ${{ vars.AZURE_CLIENT_ID }}
+          ARM_SUBSCRIPTION_ID: ${{ vars.AZURE_SUBSCRIPTION_ID }}
+          ARM_TENANT_ID: ${{ vars.AZURE_TENANT_ID }}
+          ARM_USE_OIDC: true
         run: |
           set -euo pipefail
           terraform plan -input=false -lock=false -out=tfplan
