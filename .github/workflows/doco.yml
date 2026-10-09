@@ -69,7 +69,7 @@ jobs:
 
               currency="$(jq -r ".currency // \"USD\"" "$json_file")"
               cost="$(jq -r '.totalMonthlyCost // 0' "$json_file")"
-              printf "| `%s` | %s %.2f |\n" "${dir%/}" "$currency" "$cost"
+              printf "| \`%s\` | %s %.2f |\n" "${dir%/}" "$currency" "$cost"
 
               rm -f "$json_file"
             done
