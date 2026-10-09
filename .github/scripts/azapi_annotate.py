@@ -113,7 +113,10 @@ def load_azapi_resources(plan):
     for rc in plan.get("resource_changes", []):
         if rc.get("type") != "azapi_resource":
             continue
-        after = (rc.get("change") or {}).get("after") or {}
+        change = rc.get("change") or {}
+        if change.get("actions") == ["delete"]:
+            continue  # being destroyed: not part of the target architecture
+        after = change.get("after") or {}
         arm = after.get("type")
         found.append({
             "address": rc["address"],
@@ -136,8 +139,7 @@ def q(s):
 
 
 def main():
-    ap = argparse.ArgumentParser(
-        description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
+    ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("plan_json")
     ap.add_argument("graph_json")
     ap.add_argument("--title", default=None)
@@ -150,8 +152,7 @@ def main():
     with open(args.graph_json) as f:
         graph = json.load(f)
     if not isinstance(graph, dict):
-        sys.exit(
-            "graph.json is not a JSON object keyed by node name; was it made by `terravision graphdata`?")
+        sys.exit("graph.json is not a JSON object keyed by node name; was it made by `terravision graphdata`?")
 
     azapi = load_azapi_resources(plan)
 
@@ -174,8 +175,7 @@ def main():
         plans = plan_by_norm.get(norm, [])
         keys = sorted(keys)
         if not plans:
-            warnings.append(
-                f"{norm}: in graph but not in plan; left as a generic node")
+            warnings.append(f"{norm}: in graph but not in plan; left as a generic node")
             continue
         if len(plans) != len(keys):
             warnings.append(f"{norm}: {len(plans)} plan instance(s) vs {len(keys)} graph node(s); "
@@ -191,16 +191,14 @@ def main():
             if not azurerm:
                 warnings.append(f"{key}: no azurerm mapping for ARM type {r['arm_type']!r}; "
                                 f"labelled but still a generic node")
-                replace[key] = {"standin": None,
-                                "label": label, "azurerm": None}
+                replace[key] = {"standin": None, "label": label, "azurerm": None}
                 continue
             base = re.sub(r"\W+", "_", short_name(key)).strip("_") or "res"
             name, n = base, 2
             while f"{azurerm}.{name}" in used_names:
                 name, n = f"{base}_{n}", n + 1
             used_names.add(f"{azurerm}.{name}")
-            replace[key] = {"standin": f"{azurerm}.{name}",
-                            "label": label, "azurerm": azurerm}
+            replace[key] = {"standin": f"{azurerm}.{name}", "label": label, "azurerm": azurerm}
 
     standin_of = {k: v["standin"] for k, v in replace.items() if v["standin"]}
     noise = [] if args.keep_noise else [k for k in graph if is_noise(k)]
