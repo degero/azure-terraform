@@ -116,8 +116,10 @@ jobs:
       - name: Publish Step Summary
         if: always() && (steps.plan.outputs.exitcode == '0' || steps.plan.outputs.exitcode == '2')
         working-directory: ${{ env.WORKING_DIR }}
+        env:
+          DRIFT_EXIT_CODE: ${{ steps.plan.outputs.exitcode }}
         run: |
-          if [ "${{ steps.plan.outputs.exitcode }}" -eq 2 ]; then
+          if [ "$DRIFT_EXIT_CODE" = "2" ]; then
             echo "## ⚠️ Terraform Drift Detected — \`${{ env.ENVIRONMENT }}\`" >> "$GITHUB_STEP_SUMMARY"
           else
             echo "## ✅ Terraform In Sync — \`${{ env.ENVIRONMENT }}\`" >> "$GITHUB_STEP_SUMMARY"
