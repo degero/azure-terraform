@@ -10,6 +10,7 @@
 [![Terraform Unit Tests](https://github.com/degero/azure-terraform/actions/workflows/tf-test.yml/badge.svg)](https://github.com/degero/azure-terraform/actions/workflows/tf-test.yml)
 [![Terraform Validate](https://github.com/degero/azure-terraform/actions/workflows/tf-validate.yml/badge.svg)](https://github.com/degero/azure-terraform/actions/workflows/tf-validate.yml)
 [![Trivy Terraform Scan](https://github.com/degero/azure-terraform/actions/workflows/trivy.yml/badge.svg)](https://github.com/degero/azure-terraform/actions/workflows/trivy.yml)
+[![Terraform Drift Detection](https://github.com/degero/azure-terraform/actions/workflows/tf-drift.yml/badge.svg)](https://github.com/degero/azure-terraform/actions/workflows/tf-drift.yml)
 
 ## Description
 
@@ -23,7 +24,7 @@ This template is focused on the terraform and github cicd it is not opinionated 
 - Isolated terraform federated credentials + 2 UMAI per env (plan,apply) + RBAC to blob storage by environment (tfstate, tfplans containers)
 - TFPlan artifacts uploaded to blob storage (retention 7 days)
 - Named `/modules` files for easy location in VSCode (instead of lots of main.tf files)
-- Github Workflows with: Linting (tflint,actionlint,prettier), Formatting (terraform fmt), Sec checks (checkov, Gitleaks secret scanning with PR comments and SARIF artifact), Github Environments for workflow approval, Dependabot (terraform, github actions), Doco generation (terraform-docs), Terraform Validate
+- Github Workflows with: Linting (tflint,actionlint,prettier), Formatting (terraform fmt), Sec checks (checkov, Gitleaks secret scanning with PR comments and SARIF artifact), Github Environments for workflow approval, Dependabot (terraform, github actions), Doco generation (terraform-docs), Terraform Validate, Drift Detection (automated scheduled checks + issue management)
 - Pre-push githook to validate/format terraform, lint (prettier,actionlint,powershell,shellscript) and checkov (if installed) locally
 - VSCode settings for format on save: markdown / yaml / json(c), powershell
 - Prettier rules for markdown / yaml / json(c)
