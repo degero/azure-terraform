@@ -74,6 +74,7 @@ use_oidc = true
 **Prerequisites:**
 
 - Terraform
+- Azure CLI (logged in to tenant with remote storage)
 
 (Optional for githook prepush)
 
@@ -250,3 +251,5 @@ https://www.terraform-best-practices.com/examples/terraform/medium-size-infrastr
 https://developer.hashicorp.com/terraform/language/backend/azurerm
 
 https://github.com/mermaid-js/mermaid
+
+https://github.com/Pwd9000-ML/Azure-Terraform-Deployments

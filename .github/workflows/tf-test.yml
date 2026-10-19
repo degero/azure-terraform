@@ -2,6 +2,7 @@ name: Terraform Unit Tests
 
 on:
   workflow_call:
+  workflow_dispatch:
 
 permissions: {}
 
@@ -54,4 +55,4 @@ jobs:
           detailed_summary: true
           check_name: Terraform Unit Test Report
           comment: true
-          pr_id: ${{ github.event.workflow_run.pull_requests[0].number }}
+          pr_id: ${{ github.event.pull_request.number }}

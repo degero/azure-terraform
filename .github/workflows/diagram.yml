@@ -1,9 +1,37 @@
 name: Generate Terraform Diagram
 
+permissions: {}
+
 on:
   push:
-    branches: [main]
+    branches: [main] #This will just find the highest tf env in /environments/<env> and generate 1 diagram
   workflow_dispatch:
+    inputs:
+      terraform-directory:
+        description: "Path to the Terraform root module"
+        required: false
+        type: string
+        default: "."
+      docs-path:
+        description: "Directory (relative to repo root) to write the diagram into"
+        required: false
+        type: string
+        default: "docs"
+      diagram-filename:
+        description: "Output filename for the rendered diagram"
+        required: false
+        type: string
+        default: "terraform-diagram.svg"
+      commit-changes:
+        description: "Whether to commit the generated diagram/README changes back to the repo"
+        required: false
+        type: boolean
+        default: true
+      environment:
+        description: "GitHub environment prefix; the job runs in '<environment>-plan'. Defaults to the basename of terraform-directory"
+        required: false
+        type: string
+        default: ""
   workflow_call:
     inputs:
       terraform-directory:
@@ -26,23 +54,35 @@ on:
         required: false
         type: boolean
         default: true
+      environment:
+        description: "GitHub environment prefix; the job runs in '<environment>-plan'. Defaults to the basename of terraform-directory"
+        required: false
+        type: string
+        default: ""
 
 jobs:
-  generate-diagram:
+  config:
     runs-on: ubuntu-latest
-    permissions:
-      contents: write
+    permissions: {}
+    outputs:
+      terraform_directory: ${{ steps.diagram_config.outputs.terraform_directory }}
+      docs_path: ${{ steps.diagram_config.outputs.docs_path }}
+      diagram_filename: ${{ steps.diagram_config.outputs.diagram_filename }}
+      commit_changes: ${{ steps.diagram_config.outputs.commit_changes }}
+      environment: ${{ steps.diagram_config.outputs.environment }}
     steps:
-      - name: Checkout
-        uses: actions/checkout@v7
-
+      # `inputs.*` are empty on push events, so every value used later is
+      # resolved here (push defaults vs. dispatch/call inputs) and exposed as a step output.
       - name: Resolve diagram configuration
         id: diagram_config
         shell: bash
         env:
           TF_ENVIRONMENTS: ${{ vars.TF_ENVIRONMENTS }}
           INPUT_TERRAFORM_DIRECTORY: ${{ inputs.terraform-directory }}
+          INPUT_DOCS_PATH: ${{ inputs.docs-path }}
           INPUT_DIAGRAM_FILENAME: ${{ inputs.diagram-filename }}
+          INPUT_COMMIT_CHANGES: ${{ inputs.commit-changes }}
+          INPUT_ENVIRONMENT: ${{ inputs.environment }}
         run: |
           if [[ "$GITHUB_EVENT_NAME" == "push" ]]; then
             environment="$(python3 -c 'import json, os; print(json.loads(os.environ["TF_ENVIRONMENTS"])[-1])')"
@@ -51,88 +91,143 @@ jobs:
             else
               terraform_directory="environments/$environment"
             fi
+            docs_path="docs"
             diagram_filename="${environment##*/}-terraform-diagram.svg"
+            commit_changes="true"
+            environment_name="${environment##*/}"
           else
-            terraform_directory="$INPUT_TERRAFORM_DIRECTORY"
-            diagram_filename="$INPUT_DIAGRAM_FILENAME"
+            terraform_directory="${INPUT_TERRAFORM_DIRECTORY:-.}"
+            docs_path="${INPUT_DOCS_PATH:-docs}"
+            diagram_filename="${INPUT_DIAGRAM_FILENAME:-terraform-diagram.svg}"
+            commit_changes="${INPUT_COMMIT_CHANGES:-true}"
+            environment_name="${INPUT_ENVIRONMENT:-$(basename "$terraform_directory")}"
           fi
-          echo "terraform_directory=$terraform_directory" >> "$GITHUB_OUTPUT"
-          echo "diagram_filename=$diagram_filename" >> "$GITHUB_OUTPUT"
 
-      - uses: ./.github/actions/tf-setup
-      - uses: ./.github/actions/tf-init
-        with:
-          working_directory: ${{ steps.diagram_config.outputs.terraform_directory }}
-          no_backend: "true"
+          if [[ -z "$environment_name" || "$environment_name" == "." ]]; then
+            echo "::error::Could not determine the GitHub environment name. Pass the 'environment' input."
+            exit 1
+          fi
 
-      - name: Generate Terraform graph (DOT)
-        working-directory: ${{ steps.diagram_config.outputs.terraform_directory }}
-        run: terraform graph > graph.dot
+          if [[ -z "$terraform_directory" ]]; then
+            echo "::error::terraform_directory resolved to an empty value. Check that the TF_ENVIRONMENTS repo variable exists and is valid JSON, e.g. [\"dev\",\"prod\"]."
+            exit 1
+          fi
 
-      - name: Convert DOT graph to Mermaid syntax
-        run: |
-          python3 - "${{ steps.diagram_config.outputs.terraform_directory }}/graph.dot" > diagram.mmd << 'PYEOF'
-          import re, sys
-
-          dot_path = sys.argv[1]
-          with open(dot_path) as f:
-              dot = f.read()
-
-          # Extract edges of the form: "node_a" -> "node_b"
-          edge_re = re.compile(r'"([^"]+)"\s*->\s*"([^"]+)"')
-          edges = edge_re.findall(dot)
-
-          def clean(label: str) -> str:
-              # Strip terraform graph noise, keep resource address readable
-              label = label.split(" (expand)")[0]
-              label = re.sub(r'[^A-Za-z0-9_\.\[\]/-]', '_', label)
-              return label
-
-          def node_id(label: str) -> str:
-              return re.sub(r'[^A-Za-z0-9_]', '_', label)
-
-          print("flowchart LR")
-          seen_nodes = set()
-          for src, dst in edges:
-              src_c, dst_c = clean(src), clean(dst)
-              src_id, dst_id = node_id(src_c), node_id(dst_c)
-              for nid, label in ((src_id, src_c), (dst_id, dst_c)):
-                  if nid not in seen_nodes:
-                      seen_nodes.add(nid)
-                      print(f'    {nid}["{label}"]')
-              print(f"    {src_id} --> {dst_id}")
-          PYEOF
-
-      - name: Install mermaid-cli (mermaid engine built from mermaid-js/mermaid@main)
-        run: |
-          mkdir -p /tmp/mermaid-render
-          cd /tmp/mermaid-render
-          cat > package.json << 'EOF'
           {
-            "name": "mermaid-render",
-            "private": true,
-            "dependencies": {
-              "@mermaid-js/mermaid-cli": "latest"
-            },
-            "overrides": {
-              "mermaid": "github:mermaid-js/mermaid#main"
-            }
+            echo "terraform_directory=$terraform_directory"
+            echo "docs_path=$docs_path"
+            echo "diagram_filename=$diagram_filename"
+            echo "commit_changes=$commit_changes"
+            echo "environment=$environment_name"
+          } >> "$GITHUB_OUTPUT"
+
+          echo "terraform_directory='$terraform_directory'"
+          echo "docs_path='$docs_path'"
+          echo "diagram_filename='$diagram_filename'"
+          echo "commit_changes='$commit_changes'"
+          echo "environment='$environment_name'"
+
+  generate-diagram:
+    needs: config
+    runs-on: ubuntu-latest
+    # Same GitHub environment as the plan workflow, so its secrets/vars are available.
+    # NOTE: any protection rules / required reviewers on that environment apply here too.
+    environment: ${{ needs.config.outputs.environment }}-plan
+    permissions:
+      contents: write
+      # id-token: write   # uncomment if you authenticate with OIDC (ARM_USE_OIDC)
+    env:
+      TF_IN_AUTOMATION: "true"
+      TF_INPUT: 0
+      TF_VAR_ci_run: "true"
+      # Pinned on purpose: bump deliberately after checking a diagram still renders.
+      TERRAVISION_VERSION: "0.53.0"
+    steps:
+      - uses: actions/checkout@v7
+      - uses: ./.github/actions/tf-setup
+      # Use a local backend so no remote state access is needed (runner-only file, never committed).
+      - name: Init Terraform with local backend override (diagram only)
+        env:
+          ARM_CLIENT_ID: ${{ vars.AZURE_CLIENT_ID }}
+          ARM_SUBSCRIPTION_ID: ${{ vars.AZURE_SUBSCRIPTION_ID }}
+          ARM_TENANT_ID: ${{ vars.AZURE_TENANT_ID }}
+          ARM_USE_OIDC: true
+        working-directory: ${{ needs.config.outputs.terraform_directory }}
+        run: |
+          cat > backend_override.tf << 'EOF'
+          terraform {
+            backend "local" {}
           }
           EOF
-          npm install --no-fund --no-audit
+          terraform init -input=false
 
-      - name: Render diagram to SVG
+      # The plan gives each resource's real type/name (incl. azapi_resource's Azure type);
+      # `terraform graph` gives the dependencies. Both stay on the runner (plan may contain secrets).
+      # TerraVision reuses these two files, so it doesn't plan a second time.
+      - name: Plan and export JSON + dependency graph
+        working-directory: ${{ needs.config.outputs.terraform_directory }}
+        env:
+          ARM_CLIENT_ID: ${{ vars.AZURE_CLIENT_ID }}
+          ARM_SUBSCRIPTION_ID: ${{ vars.AZURE_SUBSCRIPTION_ID }}
+          ARM_TENANT_ID: ${{ vars.AZURE_TENANT_ID }}
+          ARM_USE_OIDC: true
         run: |
-          mkdir -p "${{ inputs.docs-path }}"
-          /tmp/mermaid-render/node_modules/.bin/mmdc \
-            -i diagram.mmd \
-            -o "${{ inputs.docs-path }}/${{ steps.diagram_config.outputs.diagram_filename }}" \
-            -b transparent
+          set -euo pipefail
+          terraform plan -input=false -lock=false -out=tfplan
+          terraform show -json tfplan > plan.json
+          terraform graph > graph.dot
+          echo "plan.json: $(wc -c < plan.json) bytes, graph.dot: $(wc -l < graph.dot) lines"
+
+      - name: Install Graphviz
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends graphviz
+          # Newer Ubuntu/Debian ship the neato layout engine (which TerraVision needs) as a separate package.
+          if apt-cache show libgvplugin-neato-layout8 > /dev/null 2>&1; then
+            sudo apt-get install -y --no-install-recommends libgvplugin-neato-layout8
+          fi
+          sudo dot -c
+          echo 'digraph{a->b}' | neato -Tsvg > /dev/null
+
+      - name: Install TerraVision (pinned)
+        run: |
+          python3 -m venv "$RUNNER_TEMP/terravision-venv"
+          "$RUNNER_TEMP/terravision-venv/bin/pip" install --quiet "terravision==${TERRAVISION_VERSION}"
+          echo "$RUNNER_TEMP/terravision-venv/bin" >> "$GITHUB_PATH"
+
+      # Renders with TerraVision, first inferring icons/labels for azapi_resource (AVMs) from
+      # each resource's Azure `type`, and letting TerraVision clone SHA-pinned modules.
+      - name: Build and render diagram
+        env:
+          TF_DIR: ${{ needs.config.outputs.terraform_directory }}
+          DOCS_PATH: ${{ needs.config.outputs.docs_path }}
+          DIAGRAM_FILENAME: ${{ needs.config.outputs.diagram_filename }}
+          ENVIRONMENT: ${{ needs.config.outputs.environment }}
+        run: |
+          set -euo pipefail
+          mkdir -p "$DOCS_PATH"
+
+          bash .github/scripts/tf_diagram.sh \
+            --tf-dir "$TF_DIR" \
+            --plan "$TF_DIR/plan.json" \
+            --graph "$TF_DIR/graph.dot" \
+            --title "Terraform: $ENVIRONMENT" \
+            --out "$DOCS_PATH/$DIAGRAM_FILENAME"
+
+          if [[ ! -s "$DOCS_PATH/$DIAGRAM_FILENAME" ]]; then
+            echo "::error::$DOCS_PATH/$DIAGRAM_FILENAME is missing or empty."
+            exit 1
+          fi
+          ls -l "$DOCS_PATH/$DIAGRAM_FILENAME"
 
       - name: Ensure README references the diagram
+        env:
+          DOCS_PATH: ${{ needs.config.outputs.docs_path }}
+          DIAGRAM_FILENAME: ${{ needs.config.outputs.diagram_filename }}
         run: |
-          README="${{ inputs.docs-path }}/README.md"
-          DOC_LINK="/${{ steps.diagram_config.outputs.diagram_filename }}"
+          README="$DOCS_PATH/README.md"
+          # README sits next to the SVG, so link relatively
+          DOC_LINK="./$DIAGRAM_FILENAME"
           MARKER="<!-- terraform-diagram:start -->"
 
           [ -f "$README" ] || touch "$README"
@@ -148,15 +243,31 @@ jobs:
               echo "![Terraform diagram]($DOC_LINK)"
               echo "<!-- terraform-diagram:end -->"
             } >> "$README"
-            echo "Injected diagram reference into README.md"
+            echo "Injected diagram reference into $README"
           fi
 
       - name: Commit changes
-        if: ${{ inputs.commit-changes }}
+        if: ${{ needs.config.outputs.commit_changes == 'true' }}
+        env:
+          DOCS_PATH: ${{ needs.config.outputs.docs_path }}
+          DIAGRAM_FILENAME: ${{ needs.config.outputs.diagram_filename }}
         run: |
+          set -euo pipefail
+          SVG="$DOCS_PATH/$DIAGRAM_FILENAME"
+
+          # TerraVision stamps the render time into every diagram, so a plain diff would
+          # change on every run. If the only difference from the committed SVG is that
+          # timestamp, keep the committed one and don't create a commit.
+          norm() { sed -E 's/[0-9]{4}-[0-9]{2}-[0-9]{2} [0-9]{2}:[0-9]{2}:[0-9]{2}(\.[0-9]+)?/TIMESTAMP/g'; }
+          if git cat-file -e "HEAD:$SVG" 2> /dev/null \
+            && diff -q <(git show "HEAD:$SVG" | norm) <(norm < "$SVG") > /dev/null; then
+            echo "Diagram unchanged apart from its timestamp; keeping the committed copy."
+            git checkout -- "$SVG"
+          fi
+
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add "${{ inputs.docs-path }}/${{ steps.diagram_config.outputs.diagram_filename }}" README.md
+          git add "$SVG" "$DOCS_PATH/README.md"
           if git diff --cached --quiet; then
             echo "No changes to commit."
           else

@@ -1,0 +1,3 @@
+# .gitleaksignore
+# Add false positive commit/finding fingerprints below to ignore them during secret scans.
+# Generate fingerprint via: gitleaks detect --report-format json

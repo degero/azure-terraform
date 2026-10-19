@@ -30,7 +30,8 @@ module "this" {
   name     = var.name
   location = var.location
 
-  tags = var.tags
+  tags             = var.tags
+  enable_telemetry = false
 }
 
 output "resource_id" {

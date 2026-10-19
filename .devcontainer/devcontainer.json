@@ -1,0 +1,89 @@
+{
+  "name": "Azure Terraform",
+  "image": "mcr.microsoft.com/devcontainers/base:ubuntu",
+
+  "features": {
+    "ghcr.io/devcontainers/features/azure-cli:1": {},
+    "ghcr.io/devcontainers/features/github-cli:1": {},
+    "ghcr.io/devcontainers/features/terraform:1": {
+      "version": "latest",
+      "tflint": "latest",
+      "installTerraformDocs": true
+    },
+    "ghcr.io/devcontainers/features/powershell:2": {
+      "version": "latest",
+      "modules": "PSScriptAnalyzer"
+    },
+    "ghcr.io/devcontainers/features/python:1": {
+      "version": "3.12"
+    },
+    "ghcr.io/devcontainers/features/node:2": {}
+  },
+
+  "postCreateCommand": "sudo apt-get update && sudo apt-get install -y --no-install-recommends graphviz libgvplugin-neato-layout8 jq shellcheck && sudo dot -c && pip install --user --no-cache-dir checkov terravision terraformgraph && npm install -g prettier cspell && sudo bash <(curl -fsSL https://raw.githubusercontent.com/rhysd/actionlint/main/scripts/download-actionlint.bash) latest /usr/local/bin && GITLEAKS_TAG=$(curl -fsSLI -o /dev/null -w '%{url_effective}' https://github.com/gitleaks/gitleaks/releases/latest | awk -F'/' '{print $NF}') && GITLEAKS_VER=${GITLEAKS_TAG#v} && [ $(uname -m) = x86_64 ] && G_ARCH=x64 || G_ARCH=arm64 && curl -fsSL https://github.com/gitleaks/gitleaks/releases/download/${GITLEAKS_TAG}/gitleaks_${GITLEAKS_VER}_linux_${G_ARCH}.tar.gz | sudo tar -xz -C /usr/local/bin gitleaks && curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh | sudo sh -s -- -b /usr/local/bin && curl -fsSL https://raw.githubusercontent.com/infracost/infracost/master/scripts/install.sh | sh && (chmod +x .githooks/* scripts/*.sh scripts/*/*.sh 2>/dev/null || true) && git config core.hooksPath .githooks && (tflint --init || true)",
+
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "4ops.terraform",
+        "hashicorp.terraform",
+        "tflint.tflint",
+        "bridgecrew.checkov",
+        "esbenp.prettier-vscode",
+        "streetsidesoftware.code-spell-checker",
+        "timonwong.shellcheck",
+        "foxundermoon.shell-format",
+        "ms-vscode.powershell",
+        "github.vscode-github-actions",
+        "bierner.markdown-mermaid"
+      ],
+      "settings": {
+        "dotnet.backgroundAnalysis.analyzerDiagnosticsScope": "fullSolution",
+        "editor.defaultFormatter": "esbenp.prettier-vscode",
+        "editor.formatOnSave": true,
+        "editor.formatOnType": true,
+        "editor.insertSpaces": true,
+        "editor.codeActionsOnSave": {
+          "source.fixAll": "explicit"
+        },
+        "yaml.format.enable": false,
+        "powershell.codeFormatting.addWhitespaceAroundPipe": true,
+        "files.trimTrailingWhitespace": true,
+        "files.insertFinalNewline": true,
+        "files.exclude": {
+          "**/.terraform": true
+        },
+        "search.exclude": {
+          "**/.terraform": true
+        },
+        "[terraform]": {
+          "editor.defaultFormatter": "hashicorp.terraform",
+          "editor.formatOnSave": true,
+          "editor.formatOnSaveMode": "file"
+        },
+        "[terraform-vars]": {
+          "editor.defaultFormatter": "hashicorp.terraform",
+          "editor.formatOnSave": true
+        },
+        "[powershell]": {
+          "editor.defaultFormatter": "ms-vscode.powershell",
+          "editor.formatOnSave": true
+        },
+        "[json]": {
+          "editor.defaultFormatter": "esbenp.prettier-vscode"
+        },
+        "[jsonc]": {
+          "editor.defaultFormatter": "esbenp.prettier-vscode"
+        },
+        "[yaml]": {
+          "editor.defaultFormatter": "esbenp.prettier-vscode"
+        },
+        "[markdown]": {
+          "editor.defaultFormatter": "esbenp.prettier-vscode"
+        }
+      }
+    }
+  },
+
+  "remoteUser": "vscode"
+}
