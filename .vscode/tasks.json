@@ -27,7 +27,6 @@
       "args": ["-chdir=environments/${input:env}", "plan", "-var-file=terraform.tfvars"],
       "problemMatcher": []
     },
-    ,
     {
       "label": "tf: validate (current dir)",
       "type": "process",
