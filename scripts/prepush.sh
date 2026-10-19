@@ -72,7 +72,11 @@ fi
 
 echo "==> Prettier check (json, jsonc, yaml, yml, md, code-workspace), cSpell check"
 if command -v npx >/dev/null 2>&1; then
-  npx --no-install prettier --write "**/*.{json,jsonc,yaml,yml,md,code-workspace}"
+  if npx --no-install prettier --version >/dev/null 2>&1; then
+    npx --no-install prettier --write "**/*.{json,jsonc,yaml,yml,md,code-workspace}"
+  else
+    echo "Skipping Prettier - Not found (will still run in CI)"
+  fi
 
   if npx --no-install cspell --version >/dev/null 2>&1; then
     npx --no-install cspell lint --no-progress --show-context --no-exit-code .
