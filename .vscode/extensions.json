@@ -2,9 +2,14 @@
   "recommendations": [
     "4ops.terraform",
     "hashicorp.terraform",
-    "streetsidesoftware.code-spell-checker",
+    "tflint.tflint",
+    "bridgecrew.checkov",
     "esbenp.prettier-vscode",
+    "streetsidesoftware.code-spell-checker",
+    "timonwong.shellcheck",
+    "foxundermoon.shell-format",
     "ms-vscode.powershell",
-    "foxundermoon.shell-format"
+    "github.vscode-github-actions",
+    "bierner.markdown-mermaid"
   ]
 }

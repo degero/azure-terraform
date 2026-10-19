@@ -31,7 +31,7 @@ if [[ "$failed" -eq 1 ]]; then
 fi
 
 echo "==> Terraform lint (tflint)"
-if ! command -v tflint >/dev/null 2>&1; then
+if command -v tflint >/dev/null 2>&1; then
   echo "==> tflint (modules)"
   tflint -f compact --recursive --chdir=modules      --config="$REPO_ROOT/.tflint.modules.hcl"
   tflint -f compact --recursive --chdir=modulegroups  --config="$REPO_ROOT/.tflint.modules.hcl"
@@ -58,7 +58,7 @@ fi
 
 echo "==> Shell script lint (shellcheck)"
 if command -v shellcheck >/dev/null 2>&1; then
-  shellcheck -S warning "$(find . -type f -name "*.sh" -not -path "*/.terraform/*")"
+  find . -type f -name "*.sh" -not -path "*/.terraform/*" -exec shellcheck -S warning {} +
 else
   echo "Shell script lint (shellcheck) not found locally — skipping (will still run in CI)"
 fi
@@ -70,9 +70,13 @@ else
   echo "Github Actions lint (actionlint) not found locally — skipping (will still run in CI)"
 fi
 
-echo "==> Prettier check (json, jsonc, yaml, yml, md), cSpell check"
+echo "==> Prettier check (json, jsonc, yaml, yml, md, code-workspace), cSpell check"
 if command -v npx >/dev/null 2>&1; then
-  npx --no-install prettier --write  "**/*.{json,jsonc,yaml,yml,md}"
+  if npx --no-install prettier --version >/dev/null 2>&1; then
+    npx --no-install prettier --write "**/*.{json,jsonc,yaml,yml,md,code-workspace}"
+  else
+    echo "Skipping Prettier - Not found (will still run in CI)"
+  fi
 
   if npx --no-install cspell --version >/dev/null 2>&1; then
     npx --no-install cspell lint --no-progress --show-context --no-exit-code .

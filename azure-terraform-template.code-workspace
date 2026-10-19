@@ -1,0 +1,142 @@
+{
+  "folders": [
+    {
+      "path": "."
+    }
+  ],
+  "settings": {
+    "dotnet.backgroundAnalysis.analyzerDiagnosticsScope": "fullSolution",
+    "editor.defaultFormatter": "esbenp.prettier-vscode",
+    "editor.formatOnSave": true,
+    "editor.formatOnType": true,
+    "editor.insertSpaces": true,
+    "editor.codeActionsOnSave": {
+      "source.fixAll": "explicit"
+    },
+    "yaml.format.enable": false,
+    "powershell.codeFormatting.addWhitespaceAroundPipe": true,
+    "[json]": {
+      "editor.defaultFormatter": "esbenp.prettier-vscode"
+    },
+    "[jsonc]": {
+      "editor.defaultFormatter": "esbenp.prettier-vscode"
+    },
+    "[yaml]": {
+      "editor.defaultFormatter": "esbenp.prettier-vscode"
+    },
+    "[markdown]": {
+      "editor.defaultFormatter": "esbenp.prettier-vscode"
+    },
+    "files.trimTrailingWhitespace": true,
+    "files.insertFinalNewline": true,
+    "files.exclude": {
+      "**/.terraform": true
+    },
+    "search.exclude": {
+      "**/.terraform": true
+    },
+    "[terraform]": {
+      "editor.defaultFormatter": "hashicorp.terraform",
+      "editor.formatOnSave": true,
+      "editor.formatOnSaveMode": "file"
+    },
+    "[terraform-vars]": {
+      "editor.defaultFormatter": "hashicorp.terraform",
+      "editor.formatOnSave": true
+    },
+    "[powershell]": {
+      "editor.defaultFormatter": "ms-vscode.powershell",
+      "editor.formatOnSave": true
+    }
+  },
+  "extensions": {
+    "recommendations": [
+      "4ops.terraform",
+      "hashicorp.terraform",
+      "tflint.tflint",
+      "bridgecrew.checkov",
+      "esbenp.prettier-vscode",
+      "streetsidesoftware.code-spell-checker",
+      "timonwong.shellcheck",
+      "foxundermoon.shell-format",
+      "ms-vscode.powershell",
+      "github.vscode-github-actions",
+      "bierner.markdown-mermaid"
+    ]
+  },
+  "tasks": {
+    "version": "2.0.0",
+    "tasks": [
+      {
+        "label": "terraform test: all modules",
+        "type": "process",
+        "command": "bash",
+        "args": ["${workspaceFolder}/scripts/tf-test.sh"],
+        "windows": {
+          "command": "pwsh",
+          "args": ["-NoProfile", "-File", "${workspaceFolder}/scripts/tf-test.ps1"]
+        },
+        "group": "test",
+        "problemMatcher": []
+      },
+      {
+        "label": "terraform test: current module",
+        "type": "shell",
+        "command": "terraform -chdir=${fileDirname} test",
+        "group": "test",
+        "problemMatcher": []
+      },
+      {
+        "label": "tf: plan (environment)",
+        "type": "process",
+        "command": "terraform",
+        "args": ["-chdir=environments/${input:env}", "plan", "-var-file=terraform.tfvars"],
+        "problemMatcher": []
+      },
+      {
+        "label": "tf: validate (current dir)",
+        "type": "process",
+        "command": "terraform",
+        "args": ["-chdir=${fileDirname}", "validate"],
+        "problemMatcher": []
+      },
+      {
+        "label": "tf: lint (tflint)",
+        "type": "process",
+        "command": "tflint",
+        "args": ["--chdir=${fileDirname}"],
+        "problemMatcher": []
+      },
+      {
+        "label": "tf: fmt (repo)",
+        "type": "process",
+        "command": "terraform",
+        "args": ["fmt", "-recursive"],
+        "problemMatcher": []
+      },
+      {
+        "label": "tf: fmt check",
+        "type": "process",
+        "command": "terraform",
+        "args": ["fmt", "-check", "-recursive", "-diff"],
+        "problemMatcher": []
+      },
+      {
+        "label": "tf: init (current dir)",
+        "type": "process",
+        "command": "terraform",
+        "args": ["-chdir=${fileDirname}", "init", "-backend=false", "-input=false"],
+        "problemMatcher": []
+      }
+    ],
+    "inputs": [
+      {
+        "id": "env",
+        "type": "pickString",
+        "description": "Environment",
+        "options": ["dev", "test", "stage", "uat", "preprod", "prod"],
+        "default": "dev"
+      }
+    ]
+  }
+}

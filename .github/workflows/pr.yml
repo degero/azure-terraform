@@ -66,9 +66,9 @@ jobs:
         environment: ${{ fromJSON(vars.TF_ENVIRONMENTS) }}
     with:
       environment: ${{ matrix.environment }}
-  apply: # If you want terraform apply to your first (lowest, normally dev) env on PRs
+  apply: # Remove false below If you want terraform apply to your first (lowest, normally dev) env on PRs.
     needs: [plan, changes]
-    if: needs.changes.outputs.terraform == 'true'
+    if: ${{ false && needs.changes.outputs.terraform == 'true' }}
     name: Terraform Apply
     permissions:
       contents: read
