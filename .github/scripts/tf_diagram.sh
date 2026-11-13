@@ -5,7 +5,7 @@
 # CI (plan + graph already produced by earlier workflow steps, no extra planning):
 #   tf_diagram.sh --tf-dir environments/test --plan environments/test/plan.json \
 #                 --graph environments/test/graph.dot --title "Terraform: test" \
-#                 --out docs/test-terraform-diagram.svg
+#                 --out docs/terraform-diagram.svg
 #
 # Local (plans for you using dummy Azure credentials unless ARM_* are already set;
 # your backend must already be local, e.g. via a gitignored backend_override.tf):

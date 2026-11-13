@@ -98,7 +98,7 @@ jobs:
               terraform_directory="environments/$environment"
             fi
             docs_path="docs"
-            diagram_filename="${environment##*/}-terraform-diagram.svg"
+            diagram_filename="terraform-diagram.svg"
             commit_changes="true"
             environment_name="${environment##*/}"
           else
