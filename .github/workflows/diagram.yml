@@ -2,9 +2,15 @@ name: Generate Terraform Diagram
 
 permissions: {}
 
+concurrency:
+  group: terraform-diagram-${{ github.repository }}-${{ github.ref }}
+  cancel-in-progress: false
+
 on:
   push:
     branches: [main] #This will just find the highest tf env in /environments/<env> and generate 1 diagram
+    paths-ignore:
+      - "docs/**"
   workflow_dispatch:
     inputs:
       terraform-directory:
@@ -144,6 +150,9 @@ jobs:
       TERRAVISION_VERSION: "0.53.0"
     steps:
       - uses: actions/checkout@v7
+        with:
+          ref: ${{ github.ref }}
+          ssh-key: ${{ secrets.DOCO_DEPLOY_KEY }}
       - uses: ./.github/actions/tf-setup
       # Use a local backend so no remote state access is needed (runner-only file, never committed).
       - name: Init Terraform with local backend override (diagram only)
@@ -281,5 +290,6 @@ jobs:
             echo "No changes to commit."
           else
             git commit -m "chore: update Terraform diagram"
+            git pull --rebase
             git push
           fi
