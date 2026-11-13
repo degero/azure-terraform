@@ -102,18 +102,18 @@ for module_name, readme_path in sorted(module_map.items()):
         for line in text
     ]
 
-lines = [f'### {env_name}', '']
+lines = [f'## Environment: {env_name}', '']
 for line in text:
     if not line.strip():
         lines.append('')
         continue
     if line.startswith('## '):
-        lines.append(f'#### {line[3:]}')
+        lines.append(f'### {line[3:]}')
     else:
         lines.append(line)
 
 # Avoid emitting duplicate heading lines when the environment doc has a single top-level heading.
-if lines and lines[0].strip() == f'### {env_name}':
+if lines and lines[0].strip() == f'## Environment: {env_name}':
     lines = lines[:1] + lines[2:]
 
 lines.append('')
@@ -134,7 +134,6 @@ env_files = [Path(p) for p in sys.argv[3:] if p]
 lines = ['# Terraform Documentation', '']
 
 if env_files:
-    lines += ['## Environments', '']
     for env_file in env_files:
         content = env_file.read_text(encoding='utf-8', errors='replace').rstrip()
         if content:
@@ -176,6 +175,8 @@ cost_breakdown = docs_root / 'infracost.md'
 if cost_breakdown.exists():
     cost_lines = cost_breakdown.read_text(encoding='utf-8', errors='replace').splitlines()
     if cost_lines and cost_lines[0].startswith('# '):
+        cost_lines = cost_lines[1:]
+    while cost_lines and not cost_lines[0].strip():
         cost_lines = cost_lines[1:]
     lines.extend(cost_lines)
 else:
