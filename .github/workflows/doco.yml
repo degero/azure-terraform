@@ -22,10 +22,6 @@ jobs:
           TERRAFORM_DOCS_VERSION: "0.18.0"
         run: bash scripts/actions/install-terraform-docs.sh
 
-      - name: Generate documentation
-        shell: bash
-        run: bash scripts/generate-docs.sh
-
       - name: Set up Infracost
         if: hashFiles('environments/**/*.tf') != ''
         uses: infracost/actions/setup@v5
@@ -53,6 +49,10 @@ jobs:
               rm -f "$json_file"
             done
           } > docs/infracost.md
+
+      - name: Generate documentation
+        shell: bash
+        run: bash scripts/generate-docs.sh
 
       - name: Commit and push
         run: |
