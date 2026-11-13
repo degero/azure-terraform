@@ -7,23 +7,23 @@
 
 | Name | Version |
 |------|---------|
-| <a name="requirement_terraform"></a> [terraform](#requirement\_terraform) | >= 1.7 |
-| <a name="requirement_azapi"></a> [azapi](#requirement\_azapi) | ~> 2.4 |
-| <a name="requirement_azurerm"></a> [azurerm](#requirement\_azurerm) | >= 5.4.0 |
+|  terraform | >= 1.7 |
+|  azapi | ~> 2.4 |
+|  azurerm | >= 5.4.0 |
 
 ### Providers
 
 | Name | Version |
 |------|---------|
-| <a name="provider_terraform"></a> [terraform](#provider\_terraform) | n/a |
+|  terraform | n/a |
 
 ### Modules
 
 | Name | Source | Version |
 |------|--------|---------|
-| <a name="module_naming"></a> [naming](./modules/core/naming/README.md) | ../../modules/core/naming | n/a |
-| <a name="module_rg"></a> [rg](./modules/core/rg/README.md) | ../../modules/core/rg | n/a |
-| <a name="module_storage"></a> [storage](./modules/storage/account/README.md) | ../../modules/storage/account | n/a |
+|  [naming](./modules/core/naming/README.md) | ../../modules/core/naming | n/a |
+|  [rg](./modules/core/rg/README.md) | ../../modules/core/rg | n/a |
+|  [storage](./modules/storage/account/README.md) | ../../modules/storage/account | n/a |
 
 ### Resources
 
@@ -35,40 +35,40 @@
 
 | Name | Description | Type | Default | Required |
 |------|-------------|------|---------|:--------:|
-| <a name="input_ci_run"></a> [ci\_run](#input\_ci\_run) | Set to true by the CICD pipeline only. | `bool` | `true` | no |
-| <a name="input_environment"></a> [environment](#input\_environment) | Environment short name, used in resource naming. | `string` | n/a | yes |
-| <a name="input_location"></a> [location](#input\_location) | n/a | `string` | `"australiaeast"` | no |
-| <a name="input_projectname"></a> [projectname](#input\_projectname) | Short project/workload name used in resource naming | `string` | n/a | yes |
-| <a name="input_tags"></a> [tags](#input\_tags) | Common tags applied to all resources. | `map(string)` | `{}` | no |
+|  ci\_run | Set to true by the CICD pipeline only. | `bool` | `true` | no |
+|  environment | Environment short name, used in resource naming. | `string` | n/a | yes |
+|  location | n/a | `string` | `"australiaeast"` | no |
+|  projectname | Short project/workload name used in resource naming | `string` | n/a | yes |
+|  tags | Common tags applied to all resources. | `map(string)` | `{}` | no |
 
 ### Outputs
 
 | Name | Description |
 |------|-------------|
-| <a name="output_rg_name"></a> [rg\_name](#output\_rg\_name) | n/a |
+|  rg\_name | n/a |
 
 ### test
 ### Requirements
 
 | Name | Version |
 |------|---------|
-| <a name="requirement_terraform"></a> [terraform](#requirement\_terraform) | >= 1.7 |
-| <a name="requirement_azapi"></a> [azapi](#requirement\_azapi) | ~> 2.4 |
-| <a name="requirement_azurerm"></a> [azurerm](#requirement\_azurerm) | >= 5.4.0 |
+|  terraform | >= 1.7 |
+|  azapi | ~> 2.4 |
+|  azurerm | >= 5.4.0 |
 
 ### Providers
 
 | Name | Version |
 |------|---------|
-| <a name="provider_terraform"></a> [terraform](#provider\_terraform) | n/a |
+|  terraform | n/a |
 
 ### Modules
 
 | Name | Source | Version |
 |------|--------|---------|
-| <a name="module_naming"></a> [naming](./modules/core/naming/README.md) | ../../modules/core/naming | n/a |
-| <a name="module_rg"></a> [rg](./modules/core/rg/README.md) | ../../modules/core/rg | n/a |
-| <a name="module_storage"></a> [storage](./modules/storage/account/README.md) | ../../modules/storage/account | n/a |
+|  [naming](./modules/core/naming/README.md) | ../../modules/core/naming | n/a |
+|  [rg](./modules/core/rg/README.md) | ../../modules/core/rg | n/a |
+|  [storage](./modules/storage/account/README.md) | ../../modules/storage/account | n/a |
 
 ### Resources
 
@@ -80,17 +80,17 @@
 
 | Name | Description | Type | Default | Required |
 |------|-------------|------|---------|:--------:|
-| <a name="input_ci_run"></a> [ci\_run](#input\_ci\_run) | Set to true by the CICD pipeline only. | `bool` | `true` | no |
-| <a name="input_environment"></a> [environment](#input\_environment) | Environment short name, used in resource naming. | `string` | n/a | yes |
-| <a name="input_location"></a> [location](#input\_location) | n/a | `string` | `"australiaeast"` | no |
-| <a name="input_projectname"></a> [projectname](#input\_projectname) | Short project/workload name used in resource naming | `string` | n/a | yes |
-| <a name="input_tags"></a> [tags](#input\_tags) | Common tags applied to all resources. | `map(string)` | `{}` | no |
+|  ci\_run | Set to true by the CICD pipeline only. | `bool` | `true` | no |
+|  environment | Environment short name, used in resource naming. | `string` | n/a | yes |
+|  location | n/a | `string` | `"australiaeast"` | no |
+|  projectname | Short project/workload name used in resource naming | `string` | n/a | yes |
+|  tags | Common tags applied to all resources. | `map(string)` | `{}` | no |
 
 ### Outputs
 
 | Name | Description |
 |------|-------------|
-| <a name="output_rg_name"></a> [rg\_name](#output\_rg\_name) | n/a |
+|  rg\_name | n/a |
 
 ## Modules
 

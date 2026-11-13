@@ -190,6 +190,42 @@ rm -rf "$docs_root/environments"
 rm -f "$docs_root/modules/README.md"
 find "$docs_root" -type d -empty -delete 2>/dev/null || true
 
+"$PYTHON_BIN" - "$docs_root" <<'PY'
+import re
+import sys
+from pathlib import Path
+
+docs_root = Path(sys.argv[1])
+markdown_link = re.compile(r'\[([^\]]+)\]\(([^)]+)\)')
+html_link = re.compile(r'<a\s+href=(["\'])(.*?)\1([^>]*)>(.*?)</a>', re.I | re.S)
+named_anchor = re.compile(r'<a\s+(?:name|id)=(["\']).*?\1\s*>\s*</a>', re.I)
+
+def remove_link_fragment(match):
+    label, target = match.groups()
+    target = target.strip()
+    if target.startswith('#'):
+        return label
+
+    destination, separator, title = target.partition(' ')
+    destination = destination.split('#', 1)[0]
+    return f'[{label}]({destination}{separator}{title})'
+
+def remove_html_fragment(match):
+    quote, href, attributes, label = match.groups()
+    if href.startswith('#'):
+        return label
+
+    href = href.split('#', 1)[0]
+    return f'<a href={quote}{href}{quote}{attributes}>{label}</a>'
+
+for markdown_file in docs_root.rglob('*.md'):
+    content = markdown_file.read_text(encoding='utf-8', errors='replace')
+    content = html_link.sub(remove_html_fragment, content)
+    content = markdown_link.sub(remove_link_fragment, content)
+    content = named_anchor.sub('', content)
+    markdown_file.write_text(content, encoding='utf-8')
+PY
+
 for temp_file in "${env_section_files[@]}"; do
   rm -f "$temp_file"
 done
