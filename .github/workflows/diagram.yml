@@ -226,25 +226,34 @@ jobs:
           DIAGRAM_FILENAME: ${{ needs.config.outputs.diagram_filename }}
         run: |
           README="$DOCS_PATH/README.md"
-          # README sits next to the SVG, so link relatively
           DOC_LINK="./$DIAGRAM_FILENAME"
-          MARKER="<!-- terraform-diagram:start -->"
-
           [ -f "$README" ] || touch "$README"
+          python3 - "$README" "$DOC_LINK" <<'PY'
+          import re
+          import sys
+          from pathlib import Path
 
-          if grep -qF "$MARKER" "$README"; then
-            echo "README already has a terraform-diagram section; leaving as-is."
-          else
-            {
-              echo "## Diagram"
-              echo "$MARKER"
-              echo "Auto-generated from Terraform. Do not edit manually."
-              echo ""
-              echo "![Terraform diagram]($DOC_LINK)"
-              echo "<!-- terraform-diagram:end -->"
-            } >> "$README"
-            echo "Injected diagram reference into $README"
-          fi
+          readme = Path(sys.argv[1])
+          diagram_link = sys.argv[2]
+          content = readme.read_text(encoding='utf-8')
+          section = (
+              '<!-- terraform-diagram:start -->\n\n'
+              'Auto-generated from Terraform. Do not edit manually.\n\n'
+              f'![Terraform diagram]({diagram_link})\n'
+              '<!-- terraform-diagram:end -->'
+          )
+          markers = re.compile(
+              r'<!-- terraform-diagram:start -->.*?<!-- terraform-diagram:end -->',
+              re.S,
+          )
+
+          if markers.search(content):
+              content = markers.sub(lambda _: section, content, count=1)
+          else:
+              content = content.rstrip() + '\n\n## Diagram\n' + section + '\n'
+
+          readme.write_text(content, encoding='utf-8')
+          PY
 
       - name: Commit changes
         if: ${{ needs.config.outputs.commit_changes == 'true' }}
