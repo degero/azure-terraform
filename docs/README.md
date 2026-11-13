@@ -106,7 +106,9 @@ Only a diagram for the highest environment is generated.
 
 <!-- terraform-diagram:start -->
 
-![Terraform diagram](terraform-diagram.svg)
+Auto-generated from Terraform. Do not edit manually.
+
+![Terraform diagram](./test-terraform-diagram.svg)
 <!-- terraform-diagram:end -->
 
 ## Cost Breakdown
