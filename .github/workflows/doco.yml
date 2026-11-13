@@ -54,6 +54,9 @@ jobs:
         shell: bash
         run: bash scripts/generate-docs.sh
 
+      - name: Format generated documentation
+        run: npx prettier --write "docs/**/*.md"
+
       - name: Commit and push
         run: |
           git config user.name "github-actions[bot]"

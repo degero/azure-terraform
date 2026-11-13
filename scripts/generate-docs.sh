@@ -36,7 +36,6 @@ rm -rf "$docs_root/modules" "$docs_root/environments"
 rm -f "$docs_root/README.md"
 mkdir -p "$docs_root/modules"
 
-module_section_files=()
 if [ -d "$repo_root/modules" ]; then
   while IFS= read -r module_dir; do
     module_rel="${module_dir#$repo_root/modules/}"

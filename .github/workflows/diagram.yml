@@ -237,7 +237,7 @@ jobs:
           diagram_link = sys.argv[2]
           content = readme.read_text(encoding='utf-8')
           section = (
-              '<!-- terraform-diagram:start -->\n'
+              '<!-- terraform-diagram:start -->\n\n'
               'Auto-generated from Terraform. Do not edit manually.\n\n'
               f'![Terraform diagram]({diagram_link})\n'
               '<!-- terraform-diagram:end -->'
