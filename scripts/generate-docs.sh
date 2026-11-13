@@ -146,7 +146,7 @@ module_readmes = sorted(
     key=lambda p: p.relative_to(docs_root).as_posix(),
 )
 if module_readmes:
-    lines += ['## Modules', '']
+    lines += ['## Modules', '', 'Modules used by environments. These are located in `modules/`.', '']
     for readme in module_readmes:
         display = readme.parent.relative_to(module_root).as_posix()
         lines.append(f'- [{display}](./modules/{display}/README.md)')
@@ -155,7 +155,7 @@ if module_readmes:
 modulegroup_root = repo_root / 'modulegroups'
 modulegroup_readmes = sorted([p for p in modulegroup_root.rglob('README.md') if p.is_file()]) if modulegroup_root.exists() else []
 if modulegroup_readmes:
-    lines += ['## ModuleGroups', '']
+    lines += ['## Module Groups', '', 'Module groups used by environments. These are located in `modulegroups/`.', '']
     for readme in modulegroup_readmes:
         display = readme.relative_to(repo_root).as_posix()
         lines.append(f'- [{display}]({readme.relative_to(repo_root).as_posix()})')

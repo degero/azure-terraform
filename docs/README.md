@@ -92,6 +92,8 @@
 
 ## Modules
 
+Modules used by environments. These are located in `modules/`.
+
 - [core/naming](./modules/core/naming/README.md)
 - [core/rg](./modules/core/rg/README.md)
 - [storage/account](./modules/storage/account/README.md)
