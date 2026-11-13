@@ -5,43 +5,11 @@ repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 docs_root="$repo_root/docs"
 export PATH="${HOME}/.local/bin:${PATH}"
 
-find_python() {
-  local candidate
-  local -a candidates=()
-
-  for candidate in python3 python; do
-    if command -v "$candidate" >/dev/null 2>&1; then
-      candidates+=("$candidate")
-    fi
-  done
-
-  for candidate in \
-    /usr/bin/python3 \
-    /usr/local/bin/python3 \
-    /bin/python3 \
-    /mnt/c/Users/*/AppData/Local/Microsoft/WindowsApps/python.exe \
-    /mnt/c/Users/*/AppData/Local/Microsoft/WindowsApps/python3.exe \
-    /mnt/c/Users/*/AppData/Local/Programs/Python/*/python.exe \
-    /mnt/c/Users/*/AppData/Local/Programs/Python/*/python3.exe \
-    /c/Users/*/AppData/Local/Microsoft/WindowsApps/python.exe \
-    /c/Users/*/AppData/Local/Microsoft/WindowsApps/python3.exe \
-    /c/Users/*/AppData/Local/Programs/Python/*/python.exe \
-    /c/Users/*/AppData/Local/Programs/Python/*/python3.exe; do
-    if [ -f "$candidate" ] || [ -x "$candidate" ]; then
-      candidates+=("$candidate")
-    fi
-  done
-
-  for candidate in "${candidates[@]}"; do
-    if "$candidate" -c 'import sys; raise SystemExit(0)' >/dev/null 2>&1; then
-      printf '%s\n' "$candidate"
-      return 0
-    fi
-  done
-
-  echo "python3 is required to generate docs" >&2
-  return 1
-}
+PYTHON_BIN=python3
+if ! command -v "$PYTHON_BIN" >/dev/null 2>&1; then
+  echo "python3 is required to generate docs; install it and add it to PATH" >&2
+  exit 1
+fi
 
 is_placeholder_doc() {
   "$PYTHON_BIN" - "$1" <<'PY'
@@ -63,7 +31,6 @@ render_terraform_docs() {
   terraform-docs markdown table --hide header --indent 3 "$target_dir" > "$out_file"
 }
 
-PYTHON_BIN="$(find_python)"
 mkdir -p "$docs_root"
 find "$docs_root" -mindepth 1 -maxdepth 1 -exec rm -rf {} + 2>/dev/null || true
 mkdir -p "$docs_root/modules"
