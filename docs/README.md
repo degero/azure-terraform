@@ -100,6 +100,8 @@ Modules used by environments. These are located in `modules/`.
 
 ## Diagram
 
+Only a diagram for the highest environment is generated.
+
 <!-- terraform-diagram:start -->
 ![Terraform diagram](terraform-diagram.svg)
 <!-- terraform-diagram:end -->

@@ -161,7 +161,13 @@ if modulegroup_readmes:
         lines.append(f'- [{display}]({readme.relative_to(repo_root).as_posix()})')
     lines.append('')
 
-lines += ['## Diagram', '', '<!-- terraform-diagram:start -->']
+lines += [
+    '## Diagram',
+    '',
+    'Only a diagram for the highest environment is generated.',
+    '',
+    '<!-- terraform-diagram:start -->',
+]
 diagrams = sorted(docs_root.glob('*terraform-diagram.svg'))
 if diagrams:
     for diagram in diagrams:
