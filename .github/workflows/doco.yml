@@ -8,78 +8,61 @@ permissions: {}
 
 jobs:
   docs:
-    name: Generate docs (${{ matrix.root }})
+    name: Generate docs
     runs-on: ubuntu-latest
     permissions:
       contents: write
-    strategy:
-      max-parallel: 1
-      matrix:
-        root: [environments, modules, modulegroups]
     steps:
       - uses: actions/checkout@v7
         with:
-          ref: ${{ github.event.pull_request.head.ref }}
+          ref: ${{ github.event.pull_request.head.ref || github.ref }}
 
       - name: Install terraform-docs
-        if: hashFiles(format('{0}/**', matrix.root)) != ''
+        env:
+          TERRAFORM_DOCS_VERSION: "0.18.0"
         run: bash scripts/actions/install-terraform-docs.sh
 
-      - name: Generate docs/${{ matrix.root }}/README.md
-        if: hashFiles(format('{0}/**', matrix.root)) != ''
-        run: |
-          root="${{ matrix.root }}"
-          mkdir -p "docs/${root}"
-          {
-            echo "# ${root}"
-            find "$root" -name '*.tf' -not -path '*/.terraform/*' -exec dirname {} \; \
-              | sort -u \
-              | while read -r dir; do
-                  echo
-                  echo "## ${dir}"
-                  terraform-docs markdown table --hide header --indent 3 "$dir"
-                done
-          } > "docs/${root}/README.md"
+      - name: Generate documentation
+        shell: bash
+        run: bash scripts/generate-docs.sh
 
       - name: Set up Infracost
-        if: matrix.root == 'environments' && hashFiles('environments/**/*.tf') != ''
+        if: hashFiles('environments/**/*.tf') != ''
         uses: infracost/actions/setup@v5
         with:
           api-key: ${{ secrets.INFRACOST_API_KEY }}
 
       - name: Add environment cost estimates
-        if: matrix.root == 'environments' && hashFiles('environments/**/*.tf') != ''
+        if: hashFiles('environments/**/*.tf') != ''
+        shell: bash
         run: |
+          set -euo pipefail
+          mkdir -p docs
           {
-            echo
-            echo "## Estimated monthly costs"
+            echo "# Estimated monthly costs"
             echo
             echo "| Environment | Estimated monthly cost |"
             echo "|---|---:|"
-
-            for dir in environments/*/; do
+            for dir in environments/*; do
               [ -d "$dir" ] || continue
-
               json_file="$(mktemp)"
               infracost breakdown --path "$dir" --format json --out-file "$json_file" >/dev/null
-
-              currency="$(jq -r ".currency // \"USD\"" "$json_file")"
+              currency="$(jq -r '.currency // "USD"' "$json_file")"
               cost="$(jq -r '.totalMonthlyCost // 0' "$json_file")"
-              printf "| \`%s\` | %s %.2f |\n" "${dir%/}" "$currency" "$cost"
-
+              printf "| \`%s\` | %s %.2f |\n" "${dir##*/}" "$currency" "$cost"
               rm -f "$json_file"
             done
-          } >> docs/environments/README.md
+          } > docs/infracost.md
 
       - name: Commit and push
-        if: hashFiles(format('{0}/**', matrix.root)) != ''
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add -A "docs/${{ matrix.root }}"
+          git add -A docs
           if git diff --cached --quiet; then
             echo "No changes to commit"
             exit 0
           fi
-          git commit -m "docs: update terraform-docs for ${{ matrix.root }}"
-          git pull
+          git commit -m "docs: update terraform docs"
+          git pull --rebase
+          git push
