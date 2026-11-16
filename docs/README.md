@@ -107,7 +107,6 @@ Only a diagram for the highest environment is generated.
 <!-- terraform-diagram:start -->
 
 ![Terraform diagram](terraform-diagram.svg)
-![Terraform diagram](test-terraform-diagram.svg)
 <!-- terraform-diagram:end -->
 
 ## Cost Breakdown
