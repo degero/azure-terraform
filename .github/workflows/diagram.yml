@@ -86,7 +86,6 @@ jobs:
           TF_ENVIRONMENTS: ${{ vars.TF_ENVIRONMENTS }}
           INPUT_TERRAFORM_DIRECTORY: ${{ inputs.terraform-directory }}
           INPUT_DOCS_PATH: ${{ inputs.docs-path }}
-          INPUT_DIAGRAM_FILENAME: ${{ inputs.diagram-filename }}
           INPUT_COMMIT_CHANGES: ${{ inputs.commit-changes }}
           INPUT_ENVIRONMENT: ${{ inputs.environment }}
         run: |
@@ -98,15 +97,19 @@ jobs:
               terraform_directory="environments/$environment"
             fi
             docs_path="docs"
-            diagram_filename="${environment##*/}-terraform-diagram.svg"
             commit_changes="true"
             environment_name="${environment##*/}"
           else
             terraform_directory="${INPUT_TERRAFORM_DIRECTORY:-.}"
             docs_path="${INPUT_DOCS_PATH:-docs}"
-            diagram_filename="${INPUT_DIAGRAM_FILENAME:-terraform-diagram.svg}"
             commit_changes="${INPUT_COMMIT_CHANGES:-true}"
             environment_name="${INPUT_ENVIRONMENT:-$(basename "$terraform_directory")}"
+          fi
+
+          if [[ "$GITHUB_EVENT_NAME" == "push" && "$GITHUB_REF" == "refs/heads/main" ]]; then
+            diagram_filename="${environment##*/}-terraform-diagram.svg"
+          else
+            diagram_filename="terraform-diagram.svg"
           fi
 
           if [[ -z "$environment_name" || "$environment_name" == "." ]]; then

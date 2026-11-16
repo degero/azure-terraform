@@ -59,6 +59,9 @@ jobs:
         shell: bash
         run: bash scripts/generate-docs.sh
 
+      - name: Remove temporary Infracost input
+        run: rm -f docs/infracost.md
+
       - name: Format generated documentation
         run: npx prettier --write "docs/**/*.md"
 
