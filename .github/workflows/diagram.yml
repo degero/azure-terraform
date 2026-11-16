@@ -110,7 +110,7 @@ jobs:
           fi
 
           diagram_filename="${diagram_filename#env-}"
-          if [[ "$GITHUB_REF" != "refs/heads/main" ]]; then
+          if [[ "$GITHUB_EVENT_NAME" != "push" ]]; then
             diagram_filename="env-$diagram_filename"
           fi
 
