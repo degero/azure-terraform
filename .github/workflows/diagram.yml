@@ -98,13 +98,20 @@ jobs:
               terraform_directory="environments/$environment"
             fi
             docs_path="docs"
-            diagram_filename="${environment##*/}-terraform-diagram.svg"
+            diagram_environment="${environment##*/}"
+            diagram_environment="${diagram_environment#env-}"
+            diagram_filename="${diagram_environment}-terraform-diagram.svg"
             commit_changes="true"
             environment_name="${environment##*/}"
           else
             terraform_directory="${INPUT_TERRAFORM_DIRECTORY:-.}"
             docs_path="${INPUT_DOCS_PATH:-docs}"
-            diagram_filename="${INPUT_DIAGRAM_FILENAME:-terraform-diagram.svg}"
+            requested_diagram_filename="${INPUT_DIAGRAM_FILENAME:-terraform-diagram.svg}"
+            if [[ "$requested_diagram_filename" == env-* ]]; then
+              diagram_filename="$requested_diagram_filename"
+            else
+              diagram_filename="env-$requested_diagram_filename"
+            fi
             commit_changes="${INPUT_COMMIT_CHANGES:-true}"
             environment_name="${INPUT_ENVIRONMENT:-$(basename "$terraform_directory")}"
           fi
