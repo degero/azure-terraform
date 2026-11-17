@@ -11,7 +11,7 @@ variable "projectname" {
 
 variable "location" {
   type    = string
-  default = "australiaeast"
+  default = "eastus"
 }
 
 variable "tags" {

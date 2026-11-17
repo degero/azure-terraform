@@ -1,2 +1,4 @@
-# terraform.tfvars - only add non-sensitive data
+# terraform.tfvars - !!only add non-sensitive data!!
 location    = "eastus"
+environment = "dev"
+projectname = "helloworld" # Set your projectname (to be used in az rg/resource names)
