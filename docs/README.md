@@ -32,13 +32,13 @@
 
 ### Inputs
 
-| Name        | Description                                         | Type          | Default           | Required |
-| ----------- | --------------------------------------------------- | ------------- | ----------------- | :------: |
-| ci\_run     | Set to true by the CICD pipeline only.              | `bool`        | `true`            |    no    |
-| environment | Environment short name, used in resource naming.    | `string`      | n/a               |   yes    |
-| location    | n/a                                                 | `string`      | `"australiaeast"` |    no    |
-| projectname | Short project/workload name used in resource naming | `string`      | n/a               |   yes    |
-| tags        | Common tags applied to all resources.               | `map(string)` | `{}`              |    no    |
+| Name        | Description                                         | Type          | Default    | Required |
+| ----------- | --------------------------------------------------- | ------------- | ---------- | :------: |
+| ci\_run     | Set to true by the CICD pipeline only.              | `bool`        | `true`     |    no    |
+| environment | Environment short name, used in resource naming.    | `string`      | n/a        |   yes    |
+| location    | n/a                                                 | `string`      | `"eastus"` |    no    |
+| projectname | Short project/workload name used in resource naming | `string`      | n/a        |   yes    |
+| tags        | Common tags applied to all resources.               | `map(string)` | `{}`       |    no    |
 
 ### Outputs
 
@@ -78,13 +78,13 @@
 
 ### Inputs
 
-| Name        | Description                                         | Type          | Default           | Required |
-| ----------- | --------------------------------------------------- | ------------- | ----------------- | :------: |
-| ci\_run     | Set to true by the CICD pipeline only.              | `bool`        | `true`            |    no    |
-| environment | Environment short name, used in resource naming.    | `string`      | n/a               |   yes    |
-| location    | n/a                                                 | `string`      | `"australiaeast"` |    no    |
-| projectname | Short project/workload name used in resource naming | `string`      | n/a               |   yes    |
-| tags        | Common tags applied to all resources.               | `map(string)` | `{}`              |    no    |
+| Name        | Description                                         | Type          | Default    | Required |
+| ----------- | --------------------------------------------------- | ------------- | ---------- | :------: |
+| ci\_run     | Set to true by the CICD pipeline only.              | `bool`        | `true`     |    no    |
+| environment | Environment short name, used in resource naming.    | `string`      | n/a        |   yes    |
+| location    | n/a                                                 | `string`      | `"eastus"` |    no    |
+| projectname | Short project/workload name used in resource naming | `string`      | n/a        |   yes    |
+| tags        | Common tags applied to all resources.               | `map(string)` | `{}`       |    no    |
 
 ### Outputs
 
