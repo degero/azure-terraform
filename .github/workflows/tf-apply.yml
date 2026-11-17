@@ -29,9 +29,10 @@ jobs:
       ARM_TENANT_ID: ${{ vars.AZURE_TENANT_ID }}
       ARM_USE_OIDC: true
       WORKING_DIR: ./environments/${{ inputs.environment }}
-      TFPLAN_STORAGE_ACCOUNT: ${{ vars.TF_PLAN_STORAGE_ACCOUNT }}
+      TF_PLAN_STORAGE_ACCOUNT: ${{ vars.TF_PLAN_STORAGE_ACCOUNT }}
       TF_INPUT: 0
       TF_VAR_ci_run: "true"
+      PLAN_BLOB_NAME: ${{ inputs.plan_blob_name }}
 
     steps:
       - uses: actions/checkout@v7
@@ -47,12 +48,15 @@ jobs:
           subscription-id: ${{ vars.AZURE_SUBSCRIPTION_ID }}
       - name: Download plan from blob storage
         working-directory: ${{ env.WORKING_DIR }}
+        env:
+          TF_PLAN_STORAGE_ACCOUNT: ${{ vars.TF_PLAN_STORAGE_ACCOUNT }}
+          PLAN_BLOB_NAME: ${{ inputs.plan_blob_name }}
         run: |
           az storage blob download \
            --auth-mode login \
-           --account-name "${{ vars.TF_PLAN_STORAGE_ACCOUNT }}" \
+           --account-name "$TF_PLAN_STORAGE_ACCOUNT" \
            --container-name tfplans \
-           --name "${{ inputs.plan_blob_name }}" \
+           --name "$PLAN_BLOB_NAME" \
            --file tfplan
       - name: Terraform Apply
         working-directory: ${{ env.WORKING_DIR }}
