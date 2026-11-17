@@ -68,6 +68,8 @@ on:
 
 jobs:
   config:
+    # Skipped in the template repo itself; runs in repos generated from it.
+    if: ${{ !github.event.repository.is_template }}
     runs-on: ubuntu-latest
     permissions: {}
     outputs:
@@ -137,6 +139,8 @@ jobs:
           echo "environment='$environment_name'"
 
   generate-diagram:
+    # Skipped in the template repo itself; runs in repos generated from it.
+    if: ${{ !github.event.repository.is_template }}
     needs: config
     runs-on: ubuntu-latest
     # Same GitHub environment as the plan workflow, so its secrets/vars are available.

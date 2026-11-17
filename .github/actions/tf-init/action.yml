@@ -19,8 +19,10 @@ runs:
     - name: Terraform Init
       shell: bash
       working-directory: ${{ inputs.working_directory }}
+      env:
+        NO_BACKEND: ${{ inputs.no_backend }}
       run: |
-        if [ "${{ inputs.no_backend }}" = "true" ]; then
+        if [ "$NO_BACKEND" = "true" ]; then
           terraform init -input=false -backend=false
         else
           terraform init -input=false -backend-config="backend.hcl"

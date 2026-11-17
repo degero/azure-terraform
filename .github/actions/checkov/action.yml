@@ -52,9 +52,12 @@ runs:
       id: resolve-sarif
       if: contains(inputs.output_format, 'sarif')
       shell: bash
+      env:
+        OUTPUT_FORMAT: ${{ inputs.output_format }}
+        OUTPUT_FILE_PATH: ${{ inputs.output_file_path }}
       run: |
-        IFS=',' read -ra FORMATS <<< "${{ inputs.output_format }}"
-        IFS=',' read -ra PATHS <<< "${{ inputs.output_file_path }}"
+        IFS=',' read -ra FORMATS <<< "$OUTPUT_FORMAT"
+        IFS=',' read -ra PATHS <<< "$OUTPUT_FILE_PATH"
         for i in "${!FORMATS[@]}"; do
           if [ "${FORMATS[$i]}" = "sarif" ]; then
             echo "path=${PATHS[$i]}" >> "$GITHUB_OUTPUT"

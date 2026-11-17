@@ -57,7 +57,7 @@ jobs:
       max-parallel: 1
       matrix:
         environment: ${{ fromJSON(vars.TF_ENVIRONMENTS) }}
-    uses: degero/azure-terraform/.github/workflows/tf-plan.yml@main
+    uses: ./.github/workflows/tf-plan.yml
     with:
       environment: ${{ matrix.environment }}
 
@@ -73,7 +73,7 @@ jobs:
       max-parallel: 1
       matrix:
         environment: ${{ fromJSON(vars.TF_ENVIRONMENTS) }}
-    uses: degero/azure-terraform/.github/workflows/tf-apply.yml@main
+    uses: ./.github/workflows/tf-apply.yml
     with:
       environment: ${{ matrix.environment }} #tf-plan.yml has plan_blob_name but using this deterministic for parallel changes
       plan_blob_name: ${{ github.repository }}/${{ matrix.environment }}/${{ github.run_id }}-${{ github.run_attempt }}/tfplan

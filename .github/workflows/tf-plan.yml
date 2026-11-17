@@ -34,9 +34,10 @@ jobs:
       ARM_TENANT_ID: ${{ vars.AZURE_TENANT_ID }}
       ARM_USE_OIDC: true
       WORKING_DIR: ./environments/${{ inputs.environment }}
-      TFPLAN_STORAGE_ACCOUNT: ${{ vars.TF_PLAN_STORAGE_ACCOUNT }}
+      TF_PLAN_STORAGE_ACCOUNT: ${{ vars.TF_PLAN_STORAGE_ACCOUNT }}
       TF_INPUT: 0
       TF_VAR_ci_run: "true"
+      GITHUB_REPOSITORY_PATH: ${{ github.repository }}
 
     steps:
       - uses: actions/checkout@v7
@@ -47,7 +48,13 @@ jobs:
 
       - name: Terraform plan blob name
         id: plan_path
-        run: echo "plan_blob_name=${{ github.repository }}/${{ env.ENVIRONMENT }}/${{ github.run_id }}-${{ github.run_attempt }}/tfplan" >> "$GITHUB_OUTPUT"
+        env:
+          GITHUB_REPOSITORY_PATH: ${{ github.repository }}
+          ENVIRONMENT: ${{ inputs.environment }}
+          GITHUB_RUN_ID_VALUE: ${{ github.run_id }}
+          GITHUB_RUN_ATTEMPT_VALUE: ${{ github.run_attempt }}
+        run: |
+          echo "plan_blob_name=${GITHUB_REPOSITORY_PATH}/${ENVIRONMENT}/${GITHUB_RUN_ID_VALUE}-${GITHUB_RUN_ATTEMPT_VALUE}/tfplan" >> "$GITHUB_OUTPUT"
 
       - name: Terraform Plan
         id: plan
@@ -98,13 +105,14 @@ jobs:
         uses: actions/github-script@v9
         env:
           TFPLAN_RAW: "${{ format('{0}{1}', steps.plan.outputs.stdout, steps.plan.outputs.stderr) }}"
+          ENVIRONMENT: ${{ env.ENVIRONMENT }}
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
-            const marker = `<!-- terraform-plan-comment: ${{ env.ENVIRONMENT }} -->`;
+            const marker = `<!-- terraform-plan-comment: ${process.env.ENVIRONMENT} -->`;
             const raw = process.env.TFPLAN_RAW || '';
             const tail = raw.split('\n').slice(-40).join('\n');
-            const body = `${marker}\n## ❌ Terraform Plan failed — \`${{ env.ENVIRONMENT }}\`\n\n\`\`\`\n${tail}\n\`\`\`\n\n<sub>Run: [${context.runId}](${context.payload.repository.html_url}/actions/runs/${context.runId})</sub>`;
+            const body = `${marker}\n## ❌ Terraform Plan failed — \`${process.env.ENVIRONMENT}\`\n\n\`\`\`\n${tail}\n\`\`\`\n\n<sub>Run: [${context.runId}](${context.payload.repository.html_url}/actions/runs/${context.runId})</sub>`;
 
             const { data: comments } = await github.rest.issues.listComments({
               owner: context.repo.owner,
@@ -128,12 +136,15 @@ jobs:
 
       - name: Upload plan to blob storage
         working-directory: ${{ env.WORKING_DIR }}
+        env:
+          TF_PLAN_STORAGE_ACCOUNT: ${{ vars.TF_PLAN_STORAGE_ACCOUNT }}
+          PLAN_BLOB_NAME: ${{ steps.plan_path.outputs.plan_blob_name }}
         run: |
           az storage blob upload \
             --auth-mode login \
-            --account-name "${{ vars.TF_PLAN_STORAGE_ACCOUNT }}" \
+            --account-name "$TF_PLAN_STORAGE_ACCOUNT" \
             --container-name tfplans \
-            --name "${{ steps.plan_path.outputs.plan_blob_name }}" \
+            --name "$PLAN_BLOB_NAME" \
             --file tfplan \
             --overwrite
 

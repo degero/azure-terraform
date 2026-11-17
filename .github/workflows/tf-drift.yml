@@ -24,12 +24,21 @@ jobs:
     steps:
       - name: Determine environments
         id: set-envs
+        env:
+          INPUT_ENV: ${{ github.event.inputs.environment }}
+          TF_ENVIRONMENTS: ${{ vars.TF_ENVIRONMENTS }}
         run: |
-          INPUT_ENV="${{ github.event.inputs.environment }}"
-          if [ -n "$INPUT_ENV" ]; then
+          if [[ -n "$INPUT_ENV" ]]; then
+            if [[ ! "$INPUT_ENV" =~ ^[a-z0-9-]+$ ]]; then
+              echo "::error::The workflow_dispatch environment input must match ^[a-z0-9-]+$ ."
+              exit 1
+            fi
             echo "environments=[\"$INPUT_ENV\"]" >> "$GITHUB_OUTPUT"
+          elif jq -e 'type == "array"' <<< "$TF_ENVIRONMENTS" >/dev/null 2>&1; then
+            echo "environments=${TF_ENVIRONMENTS}" >> "$GITHUB_OUTPUT"
           else
-            echo "environments=${{ vars.TF_ENVIRONMENTS }}" >> "$GITHUB_OUTPUT"
+            echo "::error::TF_ENVIRONMENTS must be a valid JSON array, for example [\"dev\",\"prod\"]."
+            exit 1
           fi
 
   drift-detect:
@@ -118,11 +127,12 @@ jobs:
         working-directory: ${{ env.WORKING_DIR }}
         env:
           DRIFT_EXIT_CODE: ${{ steps.plan.outputs.exitcode }}
+          ENVIRONMENT: ${{ matrix.environment }}
         run: |
           if [ "$DRIFT_EXIT_CODE" = "2" ]; then
-            echo "## ⚠️ Terraform Drift Detected — \`${{ env.ENVIRONMENT }}\`" >> "$GITHUB_STEP_SUMMARY"
+            echo "## ⚠️ Terraform Drift Detected — \`$ENVIRONMENT\`" >> "$GITHUB_STEP_SUMMARY"
           else
-            echo "## ✅ Terraform In Sync — \`${{ env.ENVIRONMENT }}\`" >> "$GITHUB_STEP_SUMMARY"
+            echo "## ✅ Terraform In Sync — \`$ENVIRONMENT\`" >> "$GITHUB_STEP_SUMMARY"
           fi
           echo "" >> "$GITHUB_STEP_SUMMARY"
           cat plan_summary.md >> "$GITHUB_STEP_SUMMARY"
@@ -199,6 +209,8 @@ jobs:
 
       - name: Fail job if drift detected
         if: steps.plan.outputs.exitcode == '2'
+        env:
+          ENVIRONMENT: ${{ matrix.environment }}
         run: |
-          echo "Drift was detected for environment ${{ env.ENVIRONMENT }}. See step summary and open drift issue for details."
+          echo "Drift was detected for environment $ENVIRONMENT. See step summary and open drift issue for details."
           exit 1
