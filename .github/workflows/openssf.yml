@@ -2,6 +2,8 @@ name: OpenSSF Scorecard analysis
 on:
   push:
     branches: ["main"]
+    paths-ignore:
+      - "docs/**"
   schedule:
     - cron: "30 1 * * 6" # weekly, Saturday 01:30 UTC
   workflow_dispatch:
