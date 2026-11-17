@@ -13,6 +13,8 @@ permissions: {}
 jobs:
   docs:
     name: Generate docs
+    # Skipped in the template repo itself; runs in repos generated from it.
+    if: ${{ !github.event.repository.is_template }}
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -29,7 +31,7 @@ jobs:
 
       - name: Set up Infracost
         if: hashFiles('environments/**/*.tf') != ''
-        uses: infracost/actions/setup@v5
+        uses: infracost/actions/setup@a5783eb98adc93aa7a0049fce0abb06fdd30770a # v5.0.1
         with:
           api-key: ${{ secrets.INFRACOST_API_KEY }}
 

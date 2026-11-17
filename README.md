@@ -61,8 +61,8 @@ use_oidc = true
 1. Copy [](scripts/.env.example) to scripts/.env and update with your Azure environment
 1. Setup TF state stores with [scripts/administrators/setup-azure-tfstate-store.sh](scripts/administrators/setup-azure-tfstate-store.sh)
 1. Setup Github: CICD federated credentials, Environments, Environment vars [](/scripts/administrators/setup-cicd-credentials.sh)
-1. Update Github Environments variable TF_PLAN_STORAGE_ACCOUNT with the appropriate storage account name
-1. If you want PRs to apply terraform the the lowest (first) env set a repo var `PR_TF_APPLY` as `true`
+1. Update the GitHub environment variable `TF_PLAN_STORAGE_ACCOUNT` with the appropriate storage account name.
+1. If you want PRs to apply Terraform to the lowest (first) environment, set a repo variable `PR_TF_APPLY` to `true`.
 
 ### Developers
 
@@ -138,7 +138,7 @@ Create github envionrments with the same name used in scripts/administrators/.en
 Setup Github 6 secrets for each github environment: AZURE_CLIENT_ID_ENVNAME, AZURE_TENANT_ID_ENVNAME,
 AZURE_SUBSCRIPTION_ID_ENVNAME and the same with \_PLAN suffix
 
-IMPORTANT: You will need to manually add the secret TFPLAN_STORAGE_ACCOUNT to each envs secrets (based on the state storage for that env)
+IMPORTANT: You will need to manually add the environment variable `TF_PLAN_STORAGE_ACCOUNT` for each environment, based on the state storage for that environment.
 
 ### Azure setup
 
